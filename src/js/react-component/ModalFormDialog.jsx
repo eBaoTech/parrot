@@ -45,7 +45,10 @@
 		},
 		getInitialState: function () {
 			return {
-				visible: false
+				visible: false,
+				expanded: true,
+				collapsible: false,
+				draggable: true
 			};
 		},
 		/**
@@ -382,6 +385,7 @@
 					pos: model.pos
 				});
 			} else {
+				console.warn("Properties [draggable, expanded, collapsible, pos] are not supported in parameters, use JSON parameter instead.");
 				this.setState({
 					visible: true,
 					model: model,
@@ -389,7 +393,10 @@
 					buttons: buttons,
 					direction: direction,
 					footer: footer,
-					title: title
+					title: title,
+					draggable: false,
+					expanded: true,
+					collapsible: false
 				});
 			}
 		}
