@@ -11,6 +11,7 @@
 			ROW_HEIGHT: 32,
 			TOOLTIP_EDIT: null,
 			TOOLTIP_REMOVE: null,
+			TOOLTIP_MORE: 'More Operations...',
 			/**
 			 * set operation button width
 			 * @param width {number}
@@ -23,6 +24,7 @@
 			SEARCH_PLACE_HOLDER: "Search...",
 			ROW_EDIT_BUTTON_ICON: "pencil",
 			ROW_REMOVE_BUTTON_ICON: "trash-o",
+			ROW_MORE_BUTTON_ICON: 'sort-down',
 			EDIT_DIALOG_SAVE_BUTTON_TEXT: "Save",
 			EDIT_DIALOG_SAVE_BUTTON_ICON: 'floppy-o',
 			SORT_ICON: "sort",
@@ -202,6 +204,7 @@
 				// clear definition
 				this.columns = null;
 			}
+			this.unregisterFromComponentCentral();
 		},
 		/**
 		 * did update
@@ -210,18 +213,22 @@
 		 */
 		componentDidUpdate: function (prevProps, prevState) {
 			this.attachListeners();
+			this.registerToComponentCentral();
 		},
 		/**
 		 * did mount
 		 */
 		componentDidMount: function () {
 			this.attachListeners();
+			this.registerToComponentCentral();
 		},
 		/**
 		 * will unmount
 		 */
 		componentWillUnmount: function () {
 			this.detachListeners();
+			this.unregisterFromComponentCentral();
+			this.destroyPopover();
 		},
 		/**
 		 * render when IE8, fixed the height of table since IE8 doesn't support max-height
@@ -305,11 +312,16 @@
 					rowOperations: rowOperations,
 					title: ""
 				};
-				config.width = (config.editable ? NTable.__operationButtonWidth : 0) + (config.removable ? NTable.__operationButtonWidth : 0);
-				if (hasUserDefinedRowOperations) {
-					config.width += NTable.__operationButtonWidth * config.rowOperations.length;
+				var maxButtonCount = this.getComponentOption('maxOperationButtonCount');
+				if (maxButtonCount) {
+					config.width = (maxButtonCount + 1) * NTable.__operationButtonWidth;
+				} else {
+					config.width = (config.editable ? NTable.__operationButtonWidth : 0) + (config.removable ? NTable.__operationButtonWidth : 0);
+					if (hasUserDefinedRowOperations) {
+						config.width += NTable.__operationButtonWidth * config.rowOperations.length;
+					}
+					config.width = config.width < NTable.__minOperationButtonWidth ? NTable.__minOperationButtonWidth : config.width;
 				}
-				config.width = config.width < NTable.__minOperationButtonWidth ? NTable.__minOperationButtonWidth : config.width;
 				this.columns.push(config);
 				if (this.fixedRightColumns > 0 || this.getComponentOption("operationFixed") === true) {
 					this.fixedRightColumns++;
@@ -539,40 +551,249 @@
 			</tr>
 			</thead>);
 		},
-		/**
-		 * render operation cell
-		 * @param column
-		 * @param data
-		 * @returns {XML}
-		 */
-		renderOperationCell: function (column, data) {
-			var editButton = column.editable ?
-				(<Button bsSize="xsmall" bsStyle="link" onClick={this.onEditClicked.bind(this, data)}
-				         className="n-table-op-btn">
-					<NIcon icon={NTable.ROW_EDIT_BUTTON_ICON} size="lg" tooltip={NTable.TOOLTIP_EDIT}/>
-				</Button>) : null;
-			var removeButton = column.removable ?
-				(<Button bsSize="xsmall" bsStyle="link" onClick={this.onRemoveClicked.bind(this, data)}
-				         className="n-table-op-btn">
-					<NIcon icon={NTable.ROW_REMOVE_BUTTON_ICON} size="lg" tooltip={NTable.TOOLTIP_REMOVE}/>
-				</Button>) : null;
+		renderRowEditButton: function(rowModel) {
+			var layout = $pt.createCellLayout('editButton', {
+				comp: {
+					style: 'link',
+					icon: NTable.ROW_EDIT_BUTTON_ICON,
+					enabled: this.getRowEditButtonEnabled(),
+					click: this.onEditClicked.bind(this, rowModel.getCurrentModel()),
+					tooltip: NTable.TOOLTIP_EDIT
+				},
+				css: {
+					comp: 'n-table-op-btn'
+				}
+			});
+			return <NFormButton model={rowModel} layout={layout} />;
+		},
+		renderRowRemoveButton: function(rowModel) {
+			var layout = $pt.createCellLayout('removeButton', {
+				comp: {
+					style: 'link',
+					icon: NTable.ROW_REMOVE_BUTTON_ICON,
+					enabled: this.getRowRemoveButtonEnabled(),
+					click: this.onRemoveClicked.bind(this, rowModel.getCurrentModel()),
+					tooltip: NTable.TOOLTIP_REMOVE
+				},
+				css: {
+					comp: 'n-table-op-btn'
+				}
+			});
+			return <NFormButton model={rowModel} layout={layout} />;
+		},
+		renderRowOperationButton: function(operation, rowModel) {
+			var layout = $pt.createCellLayout('rowButton', {
+				comp: {
+					style: 'link',
+					icon: operation.icon,
+					enabled: operation.enabled,
+					click: this.onRowOperationClicked.bind(this, operation.click, rowModel.getCurrentModel()),
+					tooltip: operation.tooltip
+				},
+				css: {
+					comp: 'n-table-op-btn'
+				}
+			});
+			return <NFormButton model={rowModel} layout={layout} />;
+		},
+		getRowOperations: function(column) {
 			var rowOperations = column.rowOperations;
 			if (rowOperations === undefined || rowOperations === null) {
 				rowOperations = [];
 			}
+			return rowOperations;
+		},
+		/**
+		 * render flat operation cell, all operation button renderred as a line.
+		 */
+		renderFlatOperationCell: function(column, rowModel) {
+			var editButton = column.editable ? this.renderRowEditButton(rowModel) : null;
+			var removeButton = column.removable ? this.renderRowRemoveButton(rowModel) : null;
+			var rowOperations = this.getRowOperations(column);
 			var _this = this;
 			return (<ButtonGroup className="n-table-op-btn-group">
-				{rowOperations.map(function (opt) {
-					// for compatibility, keep the key 'func', offically is key 'click'
-					var click = opt.click || opt.func;
-					return (<Button bsSize="xsmall" bsStyle="link" className="n-table-op-btn"
-					                onClick={_this.onRowOperationClicked.bind(_this, click, data)}>
-						<NIcon icon={opt.icon} size="lg" tooltip={opt.tooltip}/>
-					</Button>);
+				{rowOperations.map(function (operation) {
+					return _this.renderRowOperationButton(operation, rowModel);
 				})}
 				{editButton}
 				{removeButton}
 			</ButtonGroup>);
+		},
+		renderPopoverContainer: function() {
+			if (this.state.popoverDiv == null) {
+				this.state.popoverDiv = $('<div>');
+				this.state.popoverDiv.appendTo($('body'));
+				$(document).on('click', this.onDocumentClicked).on('keyup', this.onDocumentKeyUp);
+			}
+			this.state.popoverDiv.hide();
+		},
+		/**
+		 * check all row operation buttons in more popover are renderred as icon and tooltip or menu?
+		 * if operation with no icon declared, return false (render as menu)
+		 */
+		isRenderMoreOperationButtonsAsIcon: function(moreOperations) {
+			if (this.getComponentOption('moreAsMenu')) {
+				return true;
+			} else {
+				return !moreOperations.some(function(operation) {
+					return operation.icon == null;
+				});
+			}
+		},
+		renderPopoverAsMenu: function(moreOperations, rowModel) {
+			var hasIcon = moreOperations.some(function(operation) {
+				return operation.icon != null;
+			});
+			var _this = this;
+			var renderOperation = function(operation) {
+				var layout = $pt.createCellLayout('rowButton', {
+					label: operation.tooltip,
+					comp: {
+						style: 'link',
+						icon: hasIcon ? (operation.icon ? operation.icon : 'placeholder') : null,
+						enabled: operation.enabled,
+						click: _this.onRowOperationClicked.bind(_this, operation.click, rowModel.getCurrentModel())
+					},
+					css: {
+						comp: 'n-table-op-btn'
+					}
+				});
+				return (<li>
+					<NFormButton model={rowModel} layout={layout} />
+				</li>);
+			};
+			return (<ul className='nav'>{moreOperations.map(renderOperation)}</ul>);
+		},
+		renderPopoverAsIcon: function(moreOperations, rowModel) {
+			return moreOperations.map(function(operation) {
+				return _this.renderRowOperationButton(operation, rowModel);
+			});
+		},
+		renderPopover: function(moreOperations, rowModel, eventTarget) {
+			var styles = {display: 'block'};
+			var target = $(eventTarget.closest('a'));
+			var offset = target.offset();
+			styles.top = offset.top + target.outerHeight() - 5;
+			styles.left = offset.left;
+
+			var _this = this;
+			React.render((<div role="tooltip" className="n-table-op-btn-popover popover bottom in" style={styles}>
+				<div className="arrow"></div>
+				<div className="popover-content">
+					{this.isRenderMoreOperationButtonsAsIcon(moreOperations) ?
+						this.renderPopoverAsIcon(moreOperations, rowModel) :
+						this.renderPopoverAsMenu(moreOperations, rowModel)}
+				</div>
+			</div>), this.state.popoverDiv.get(0));
+		},
+		showPopover: function(moreOperations, rowModel, eventTarget) {
+			this.renderPopoverContainer();
+			this.renderPopover(moreOperations, rowModel, eventTarget);
+			this.state.popoverDiv.show();
+
+			// reset position
+			var styles = {};
+			var target = $(eventTarget.closest('a'));
+			var offset = target.offset();
+			var popover = this.state.popoverDiv.children('.popover');
+			var popWidth = popover.outerWidth();
+			styles.left = offset.left + target.outerWidth() - popWidth + 10;
+			popover.css(styles);
+		},
+		hidePopover: function() {
+			if (this.state.popoverDiv && this.state.popoverDiv.is(':visible')) {
+				this.state.popoverDiv.hide();
+				React.render(<noscript/>, this.state.popoverDiv.get(0));
+			}
+		},
+		destroyPopover: function() {
+			if (this.state.popoverDiv) {
+				$(document).off('click', this.onDocumentClicked).off('keyup', this.onDocumentKeyUp);
+				this.state.popoverDiv.remove();
+				delete this.state.popoverDiv;
+			}
+		},
+		onDocumentClicked: function(evt) {
+			var target = $(evt.target);
+			if (target.closest(this.state.popoverDiv).length == 0) {
+				this.hidePopover();
+			}
+		},
+		onDocumentKeyUp: function(evt) {
+			if (evt.keyCode === 27) {
+				this.hidePopover();
+			}
+		},
+		onRowOperationMoreClicked: function(moreOperations, rowModel, eventTarget) {
+			this.showPopover(moreOperations, rowModel, eventTarget);
+		},
+		/**
+		 * render more operations buttons
+		 */
+		renderRowOperationMoreButton: function(moreOperations, rowModel) {
+			var layout = $pt.createCellLayout('rowButton', {
+				comp: {
+					style: 'link',
+					icon: NTable.ROW_MORE_BUTTON_ICON,
+					click: this.onRowOperationMoreClicked.bind(this, moreOperations),
+					tooltip: NTable.TOOLTIP_MORE
+				},
+				css: {
+					comp: 'n-table-op-btn more'
+				}
+			});
+			return <NFormButton model={rowModel} layout={layout} />;
+		},
+		/**
+		 * render dropdown operation cell, only buttons which before maxButtonCount are renderred as a line,
+		 * a dropdown button is renderred in last, other buttons are renderred in popover of dropdown button.
+		 */
+		renderDropDownOperationCell: function(column, rowModel, maxButtonCount) {
+			var rowOperations = this.getRowOperations(column);
+			if (column.editable) {
+				rowOperations.push({editButton: true});
+			}
+			if (column.removable) {
+				rowOperations.push({removeButton: true});
+			}
+
+			var _this = this;
+			var used = -1;
+			var buttons = [];
+			rowOperations.some(function(operation) {
+				if (operation.editButton) {
+					buttons.push(_this.renderRowEditButton(rowModel));
+				} else if (operation.removeButton) {
+					buttons.push(_this.renderRowRemoveButton(rowModel));
+				} else {
+					buttons.push(_this.renderRowOperationButton(operation, rowModel));
+				}
+				used++;
+				return maxButtonCount - used == 1;
+			});
+			var hasDropdown = (rowOperations.length - used) > 1;
+			var dropdown = null;
+			if (hasDropdown) {
+				buttons.push(this.renderRowOperationMoreButton(rowOperations.slice(used + 1), rowModel));
+			}
+
+			return (<ButtonGroup className="n-table-op-btn-group">
+				{buttons}{dropdown}
+			</ButtonGroup>);
+		},
+		/**
+		 * render operation cell
+		 * @param column
+		 * @param rowModel {ModelInterface} row model
+		 * @returns {XML}
+		 */
+		renderOperationCell: function (column, rowModel) {
+			var maxButtonCount = this.getComponentOption('maxOperationButtonCount');
+			if (!maxButtonCount) {
+				return this.renderFlatOperationCell(column, rowModel);
+			} else {
+				return this.renderDropDownOperationCell(column, rowModel, maxButtonCount);
+			}
 		},
 		/**
 		 * render row select cell
@@ -621,7 +842,7 @@
 				}
 			}
 
-			var inlineModel = null;
+			var inlineModel = this.createInlineRowModel(row);
 			return (<tr className={className}>{
 				this.columns.map(function (column) {
 					if (columnIndex >= indexToRender.min && columnIndex <= indexToRender.max) {
@@ -636,7 +857,7 @@
 						var data;
 						if (column.editable || column.removable || column.rowOperations != null) {
 							// operation column
-							data = _this.renderOperationCell(column, row);
+							data = _this.renderOperationCell(column, inlineModel);
 							style['text-align'] = "center";
 						} else if (column.indexable) {
 							// index column
@@ -644,10 +865,6 @@
 						} else if (column.rowSelectable) {
 							data = _this.renderRowSelectCell(column, row);
 						} else if (column.inline) {
-							if (inlineModel == null) {
-								inlineModel = _this.createEditingModel(row);
-								inlineModel.useBaseAsCurrent();
-							}
 							// inline editor or something, can be pre-defined or just declare as be constructed as a form layout
 							if (typeof column.inline === 'string') {
 								var layout = NTable.getInlineEditor(column.inline);
@@ -1032,7 +1249,7 @@
 				// calculate width
 				this.columns.forEach(function (column) {
 					if (column.visible === undefined || column.visible === true) {
-						width += column.width;
+						width += (column.width ? (column.width * 1) : 0);
 					}
 				});
 			} else {
@@ -1054,7 +1271,7 @@
 			this.columns.forEach(function (element) {
 				if (columnIndex <= fixedLeftColumns && (element.visible === undefined || element.visible === true)) {
 					// column is fixed.
-					width += element.width;
+					width += element.width ? (element.width * 1) : 0;
 				}
 				columnIndex++;
 			});
@@ -1186,12 +1403,18 @@
 		isEditable: function () {
 			return this.getComponentOption("editable");
 		},
+		getRowEditButtonEnabled: function() {
+			return this.getComponentOption('rowEditEnabled');
+		},
 		/**
 		 * check the table is removable or not
 		 * @returns {boolean}
 		 */
 		isRemovable: function () {
 			return this.getComponentOption("removable");
+		},
+		getRowRemoveButtonEnabled: function() {
+			return this.getComponentOption('rowRemoveEnabled');
 		},
 		/**
 		 * check the table is searchable or not
@@ -1597,6 +1820,11 @@
 			var editModel = $pt.createModel(item, itemValidator);
 			editModel.parent(this.getModel());
 			return editModel;
+		},
+		createInlineRowModel: function(item) {
+			var model = this.createEditingModel(item);
+			model.useBaseAsCurrent();
+			return model;
 		},
 		/**
 		 * on model change

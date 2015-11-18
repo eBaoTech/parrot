@@ -14,7 +14,9 @@
 			// model
 			model: React.PropTypes.object,
 			// CellLayout
-			layout: React.PropTypes.object
+			layout: React.PropTypes.object,
+			// label direction
+			direction: React.PropTypes.oneOf(['vertical', 'horizontal'])
 		},
 		getDefaultProps: function () {
 			return {
@@ -22,7 +24,9 @@
 			};
 		},
 		getInitialState: function () {
-			return {};
+			return {
+				stopRetrieveLabelFromRemote: false
+			};
 		},
 		/**
 		 * will update
@@ -32,6 +36,7 @@
 			// remove post change listener to handle model change
 			this.removePostChangeListener(this.onModelChange);
 			this.removeEnableDependencyMonitor();
+			this.unregisterFromComponentCentral();
 		},
 		/**
 		 * did update
@@ -39,20 +44,22 @@
 		 * @param prevState
 		 */
 		componentDidUpdate: function (prevProps, prevState) {
-			this.getComponent().val(this.getValueFromModel());
+			this.initSetValues();
 			// add post change listener to handle model change
 			this.addPostChangeListener(this.onModelChange);
 			this.addEnableDependencyMonitor();
+			this.registerToComponentCentral();
 		},
 		/**
 		 * did mount
 		 */
 		componentDidMount: function () {
 			// set model value to component
-			this.getComponent().val(this.getValueFromModel());
+			this.initSetValues();
 			// add post change listener to handle model change
 			this.addPostChangeListener(this.onModelChange);
 			this.addEnableDependencyMonitor();
+			this.registerToComponentCentral();
 		},
 		/**
 		 * will unmount
@@ -61,6 +68,7 @@
 			// remove post change listener to handle model change
 			this.removePostChangeListener(this.onModelChange);
 			this.removeEnableDependencyMonitor();
+			this.unregisterFromComponentCentral();
 		},
 		/**
 		 * render
@@ -111,43 +119,17 @@
 		 * on component changed
 		 */
 		onComponentChange: function (evt) {
-			if (this.state.search != null) {
-				clearTimeout(this.state.search);
-			}
 			var value = evt.target.value;
-
-			var triggerDigits = this.getSearchTriggerDigits();
-			if (triggerDigits == null) {
-				throw new $pt.createComponentException(
-					$pt.ComponentConstants.Err_Search_Text_Trigger_Digits_Not_Defined,
-					"Trigger digits cannot be null in search text.");
-			}
-			this.setLabelText("");
-			if (value != null) {
-				if (triggerDigits == -1 || value.length == triggerDigits) {
-					var _this = this;
-					this.state.search = setTimeout(function () {
-						$pt.doPost(_this.getSearchUrl(), {
-							code: value
-						}, {
-							quiet: true
-						}).done(function (data) {
-							if (typeof data === 'string') {
-								data = JSON.parse(data);
-							}
-							_this.setLabelText(data.name);
-						});
-					}, 300);
-				}
-			}
-			this.setValueToModel(value);
+			this.setValueToModel(evt.target.value);
 		},
 		/**
 		 * on model change
 		 * @param evt
 		 */
 		onModelChange: function (evt) {
-			this.getComponent().val(evt.new);
+			var value = evt.new;
+			this.getComponent().val(value);
+			this.retrieveAndSetLabelTextFromRemote(value);
 		},
 		/**
 		 * show advanced search dialog
@@ -171,11 +153,67 @@
 		 * @param item
 		 */
 		pickupAdvancedResultItem: function (item) {
+			this.state.stopRetrieveLabelFromRemote = true;
 			this.setLabelText(item.name);
 			this.getModel().set(this.getDataId(), item.code);
+			this.state.stopRetrieveLabelFromRemote = false;
+		},
+		initSetValues: function() {
+			var value = this.getValueFromModel();
+			this.getComponent().val(value);
+			var labelPropertyId = this.getComponentOption('labelPropId');
+			if (labelPropertyId) {
+				this.setLabelText(this.getModel().get(labelPropertyId));
+			} else {
+				// send ajax request
+				this.retrieveAndSetLabelTextFromRemote(value);
+			}
 		},
 		setLabelText: function (text) {
 			$(React.findDOMNode(this.refs.label)).val(text);
+		},
+		/**
+		 * get label text from remote
+		 */
+		retrieveAndSetLabelTextFromRemote: function(value) {
+			if (this.state.search != null) {
+				clearTimeout(this.state.search);
+			}
+
+			if (this.state.stopRetrieveLabelFromRemote) {
+				return;
+			}
+
+			var triggerDigits = this.getSearchTriggerDigits();
+			if (triggerDigits == null) {
+				throw new $pt.createComponentException(
+					$pt.ComponentConstants.Err_Search_Text_Trigger_Digits_Not_Defined,
+					"Trigger digits cannot be null in search text.");
+			}
+
+			if (value == null || value.isBlank() || (value.length != triggerDigits && triggerDigits != -1)) {
+				this.setLabelText(null);
+				return;
+			}
+
+			var _this = this;
+			this.state.search = setTimeout(function() {
+				$pt.doPost(_this.getSearchUrl(), {
+					code: value
+				}, {
+					quiet: true
+				}).done(function (data) {
+					if (typeof data === 'string') {
+						data = JSON.parse(data);
+					}
+					_this.setLabelText(data.name);
+				}).fail(function() {
+					console.error('Error occured when retrieve label from remote in NSearch.');
+					arguments.slice(0).forEach(function(argu) {
+						console.error(argu);
+					});
+				});
+			}, 300);
 		},
 		/**
 		 * get search url
@@ -224,6 +262,15 @@
 			var _this = this;
 			var layout = this.getComponentOption('searchDialogLayout');
 			if (layout == null) {
+				var direction = this.props.direction;
+				if (!direction) {
+					direction = NForm.LABEL_DIRECTION;
+				}
+				var buttonCSS = {
+					'pull-right': true,
+					'pull-down': direction == 'vertical'
+				};
+
 				layout = {
 					name: {
 						label: NSearchText.ADVANCED_SEARCH_DIALOG_NAME_LABEL,
@@ -243,7 +290,7 @@
 							style: 'primary',
 							click: function (model) {
 								var currentModel = $.extend({}, model.getCurrentModel());
-								// 移除查询结果和翻页查询条件JSON, 只留下当前需要查询的条件数据
+								// remove query result and pagination criteria JSON, only remain the criteria data.
 								delete currentModel.items;
 								delete currentModel.criteria;
 
@@ -261,7 +308,7 @@
 							}
 						},
 						css: {
-							comp: 'pull-right pull-down'
+							comp: $pt.LayoutHelper.classSet(buttonCSS)
 						},
 						pos: {
 							row: 10,

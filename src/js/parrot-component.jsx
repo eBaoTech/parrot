@@ -1155,6 +1155,30 @@
 			return option === undefined ? null : option;
 		},
 		/**
+		 * get id of component central.
+		 */
+		getComponentCentralId: function() {
+			return this.getComponentOption('centralId');
+		},
+		/**
+		 * register to component central
+		 */
+		registerToComponentCentral: function() {
+			var id = this.getComponentCentralId();
+			if (id) {
+				$pt.LayoutHelper.registerComponent(id, this);
+			}
+		},
+		/**
+		 * unregsiter from component central
+		 */
+		unregisterFromComponentCentral: function() {
+			var id = this.getComponentCentralId();
+			if (id) {
+				$pt.LayoutHelper.unregisterComponent(id, this);
+			}
+		},
+		/**
 		 * get event monitor
 		 * @param key {string} event name, if not passed, return whole event definition
 		 * @returns {*}
@@ -1172,14 +1196,24 @@
 		 * @returns {*}
 		 */
 		getComponentRuleValue: function (key, defaultValue) {
-			var rule = this.getComponentOption(key);
+			return this.getRuleValue(this.getComponentOption(key), defaultValue);
+		},
+		/**
+		 * get rule value. return default value if not defined.
+		 * otherwise call when function and return.
+		 * rule must be defined as {when: func, depends: props}
+		 * @param rule {{when: func, depends: props}}
+		 * @param defaultValue {*}
+		 * @param model {ModelInterface} given model, optional
+		 * @returns {*}
+		 */
+		getRuleValue: function(rule, defaultValue, model) {
 			if (rule === null) {
 				return defaultValue;
 			} else if (rule === true || rule === false) {
 				return rule;
 			} else {
-				var when = rule.when;
-				return when.call(this, this.getModel(), this.getValueFromModel());
+				return rule.when.call(this, model ? model : this.getModel(), this.getValueFromModel());
 			}
 		},
 		/**
@@ -1189,7 +1223,14 @@
 		 * @returns {[*]} always return an array, never return null or undefined.
 		 */
 		getComponentRuleDependencies: function (key) {
-			var dependencies = this.getComponentOption(key);
+			return this.getRuleDependencies(this.getComponentOption(key));
+		},
+		/**
+		 * get rule dependencies. rule must be defined as {when: func, depends: props}
+		 * @param dependencies {{when: func, depends: props}}
+		 * @returns {[*]} always return an array, never return null or undefined.
+		 */
+		getRuleDependencies: function(dependencies) {
 			if (dependencies === null || dependencies.depends === undefined || dependencies.depends === null) {
 				return [];
 			} else {
@@ -1270,48 +1311,64 @@
 		/**
 		 * add dependencies monitor
 		 * @param dependencies {[]}
-		 * @param monitor func
+		 * @param monitor {function} optional
+		 * @param model {ModelInterface} monitored model, optional
 		 */
-		addDependencyMonitor: function (dependencies, monitor) {
-			monitor = monitor == null? this.__forceUpdate : monitor;
+		addDependencyMonitor: function (dependencies, monitor, model) {
+			monitor = monitor == null ? this.__forceUpdate : monitor;
 			var _this = this;
-			dependencies.forEach(function (key) {
-				if (typeof key === 'object') {
-					var id = key.id;
-					if (key.on === 'form') {
-						_this.getFormModel().addListener(id, 'post', 'change', monitor);
-					} else if (key.on === 'inner') {
-						_this.getInnerModel().addListener(id, 'post', 'change', monitor);
+			if (model) {
+				dependencies.forEach(function(key) {
+					model.addListener(key, 'post', 'change', monitor);
+				});
+			} else {
+				dependencies.forEach(function (key) {
+					if (typeof key === 'object') {
+						var id = key.id;
+						if (key.on === 'form') {
+							_this.getFormModel().addListener(id, 'post', 'change', monitor);
+						} else if (key.on === 'inner') {
+							_this.getInnerModel().addListener(id, 'post', 'change', monitor);
+						} else {
+							_this.getModel().addListener(id, "post", "change", monitor);
+						}
 					} else {
-						_this.getModel().addListener(id, "post", "change", monitor);
+						_this.getModel().addListener(key, "post", "change", monitor);
 					}
-				} else {
-					_this.getModel().addListener(key, "post", "change", monitor);
-				}
-			});
+				});
+			}
+			return this;
 		},
 		/**
 		 * remove dependencies monitor
 		 * @param dependencies {[]}
-		 * @param monitor func
+		 * @param monitor {function} optional
+		 * @param model {ModelInterface} monitored model, optional
 		 */
-		removeDependencyMonitor: function (dependencies, monitor) {
+		removeDependencyMonitor: function (dependencies, monitor, model) {
 			monitor = monitor == null? this.__forceUpdate : monitor;
 			var _this = this;
-			dependencies.forEach(function (key) {
-				if (typeof key === 'object') {
-					var id = key.id;
-					if (key.on === 'form') {
-						_this.getFormModel().removeListener(id, 'post', 'change', monitor);
-					} else if (key.on === 'inner') {
-						_this.getInnerModel().removeListener(id, 'post', 'change', monitor);
+			if (model) {
+				dependencies.forEach(function(key) {
+					model.addListener(key, 'post', 'change', monitor);
+				});
+			} else {
+				dependencies.forEach(function (key) {
+					if (typeof key === 'object') {
+						var id = key.id;
+						if (key.on === 'form') {
+							_this.getFormModel().removeListener(id, 'post', 'change', monitor);
+						} else if (key.on === 'inner') {
+							_this.getInnerModel().removeListener(id, 'post', 'change', monitor);
+						} else {
+							_this.getModel().removeListener(id, "post", "change", monitor);
+						}
 					} else {
-						_this.getModel().removeListener(id, "post", "change", monitor);
+						_this.getModel().removeListener(key, "post", "change", monitor);
 					}
-				} else {
-					_this.getModel().removeListener(key, "post", "change", monitor);
-				}
-			});
+				});
+			}
+			return this;
 		},
 		// event
 		addPostChangeListener: function (listener) {
@@ -1368,6 +1425,86 @@
 		},
 		setDefaultSectionWidth : function(width) {
 			SectionLayout.DEFAULT_WIDTH = width * 1;
+		},
+		/**
+		 * register react component to central
+		 */
+		registerComponent: function(id, component) {
+			if (this.__comp[id]) {
+				// already some components use this id
+				var exists = this.__comp[id];
+				if (Array.isArray(exists)) {
+					// push to array if not exists
+					var found = exists.find(function(existed) {
+						return existed === component;
+					});
+					if (!found) {
+						exists.push(component);
+					}
+				} else {
+					// set as array if not equals
+					if (exists !== component) {
+						this.__comp[id] = [exists, component];
+					}
+				}
+			} else {
+				// set new component
+				this.__comp[id] = component;
+			}
+			return this;
+		},
+		/**
+		 * unregister component from central
+		 */
+		unregisterComponent: function(id, component) {
+			if (component) {
+				// delete key, unregister all components with given id
+				delete this.__comp[id];
+			} else {
+				// find all existed component with given id
+				var exists = this.__comp[id];
+				if (exists) {
+					if (Array.isArray(exists)) {
+						var index = exists.findIndex(function(existed) {
+							return existed === component;
+						});
+						if (index != -1) {
+							// unregister the found component
+							exists.splice(index, 1);
+						}
+					} else if (exists === component) {
+						// only one, equals, delete key
+						delete this.__comp[id];
+					}
+				}
+			}
+			return this;
+		},
+		/**
+		 * get component by given id
+		 */
+		getComponent: function(id) {
+			return this.__comp[id];
+		},
+		__forceUpdate: function(component) {
+			if (component.forceUpdate) {
+				component.forceUpdate();
+			}
+			return this;
+		},
+		/**
+		 * force update components which has give id
+		 */
+		forceUpdate: function(id) {
+			var components = this.getComponent(id);
+			if (components) {
+				if (Array.isArray(components)) {
+					components.forEach(this.__forceUpdate);
+				} else {
+					this.__forceUpdate(components);
+				}
+			}
+			return this;
 		}
 	});
 	$pt.LayoutHelper = new LayoutHelper();

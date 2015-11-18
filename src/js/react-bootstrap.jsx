@@ -9,4 +9,7 @@
 	context.Glyphicon = ReactBootstrap.Glyphicon;
 	context.Modal = ReactBootstrap.Modal;
 	context.Panel = ReactBootstrap.Panel;
+	context.OverlayTrigger = ReactBootstrap.OverlayTrigger;
+	context.Overlay = ReactBootstrap.Overlay;
+	context.Popover = ReactBootstrap.Popover;
 })(this);

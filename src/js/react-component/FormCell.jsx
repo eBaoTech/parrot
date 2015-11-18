@@ -111,8 +111,8 @@
 			 * @returns {XML}
 			 * @private
 			 */
-			__search: function (model, layout) {
-				return <NSearchText model={model} layout={layout} ref={layout.getId()}/>;
+			__search: function (model, layout, direction) {
+				return <NSearchText model={model} layout={layout} direction={direction} ref={layout.getId()}/>;
 			},
 			/**
 			 * render table
@@ -129,6 +129,14 @@
 			 */
 			__tree: function (model, layout) {
 				return <NTree model={model} layout={layout} ref={layout.getId()}/>;
+			},
+			/**
+			 * render select tree
+			 * @returns {XML}
+			 * @private
+			 */
+			__seltree: function(model, layout) {
+				return <NSelectTree model={model} layout={layout} ref={layout.getId()} />;
 			},
 			/**
 			 * render file
@@ -230,6 +238,7 @@
 			this.removePostValidateListener(this.onModelValidateChanged);
 			this.removeVisibleDependencyMonitor();
 			this.removeEnableDependencyMonitor();
+			this.unregisterFromComponentCentral();
 		},
 		/**
 		 * did update
@@ -242,6 +251,7 @@
 			this.addPostValidateListener(this.onModelValidateChanged);
 			this.addVisibleDependencyMonitor();
 			this.addEnableDependencyMonitor();
+			this.registerToComponentCentral();
 		},
 		/**
 		 * did mount
@@ -252,6 +262,7 @@
 			this.addPostValidateListener(this.onModelValidateChanged);
 			this.addVisibleDependencyMonitor();
 			this.addEnableDependencyMonitor();
+			this.registerToComponentCentral();
 		},
 		/**
 		 * will unmount
@@ -262,6 +273,7 @@
 			this.removePostValidateListener(this.onModelValidateChanged);
 			this.removeVisibleDependencyMonitor();
 			this.removeEnableDependencyMonitor();
+			this.unregisterFromComponentCentral();
 		},
 		destroyPopover: function () {
 			var comp = this.refs.comp;
@@ -472,6 +484,24 @@
 		getHorizontalLabelWidth: function () {
 			var width = this.getComponentOption('labelWidth');
 			return width ? width : NFormCell.LABEL_WIDTH;
+		},
+		/**
+		 * register to component central
+		 */
+		registerToComponentCentral: function() {
+			var id = this.getComponentCentralId();
+			if (id) {
+				$pt.LayoutHelper.registerComponent(id + '@cell', this);
+			}
+		},
+		/**
+		 * unregsiter from component central
+		 */
+		unregisterFromComponentCentral: function() {
+			var id = this.getComponentCentralId();
+			if (id) {
+				$pt.LayoutHelper.unregisterComponent(id + '@cell', this);
+			}
 		}
 	}));
 	context.NFormCell = NFormCell;
