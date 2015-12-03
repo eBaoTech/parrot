@@ -67,7 +67,7 @@
 		 * @returns {*}
 		 * @private
 		 */
-		_getPosition: function () {
+		getPosition: function () {
 			return this.__cell.pos ? this.__cell.pos : CellLayout.DEFAULT_POSITION;
 		},
 		/**
@@ -75,7 +75,7 @@
 		 * @returns {string}
 		 */
 		getRowIndex: function () {
-			var row = this._getPosition().row;
+			var row = this.getPosition().row;
 			return row == null ? CellLayout.DEFAULT_ROW : row;
 		},
 		/**
@@ -83,7 +83,7 @@
 		 * @returns {Array|string|boolean|*}
 		 */
 		getColumnIndex: function () {
-			var col = this._getPosition().col;
+			var col = this.getPosition().col;
 			return col == null ? CellLayout.DEFAULT_COLUMN : col;
 		},
 		/**
@@ -91,7 +91,7 @@
 		 * @returns {number}
 		 */
 		getWidth: function () {
-			var width = this._getPosition().width;
+			var width = this.getPosition().width;
 			return width == null ? CellLayout.DEFAULT_WIDTH : width;
 		},
 		/**
@@ -99,7 +99,7 @@
 		 * @returns {string}
 		 */
 		getSection: function () {
-			var section = this._getPosition().section;
+			var section = this.getPosition().section;
 			return section != null ? section : SectionLayout.DEFAULT_KEY;
 		},
 		/**
@@ -107,7 +107,7 @@
 		 * @returns {string}
 		 */
 		getCard: function () {
-			var card = this._getPosition().card;
+			var card = this.getPosition().card;
 			return card != null ? card : CardLayout.DEFAULT_KEY;
 		},
 		/**
@@ -197,11 +197,18 @@
 		getAdditionalCSS: function (key, originalCSS) {
 			if (key) {
 				var additionalCSS = this.isAdditionalCSSDefined(key) ? this.__cell.css[key] : '';
+				var cssList = additionalCSS ? additionalCSS.split(' ') : [];
+				var css = {};
+				cssList.forEach(function(cssClassName) {
+					if (cssClassName && !cssClassName.isBlank()) {
+						css[cssClassName.trim()] = true;
+					}
+				});
+
 				if (originalCSS != null && !originalCSS.isBlank()) {
-					return originalCSS + ' ' + additionalCSS;
-				} else {
-					return additionalCSS;
+					css[originalCSS.trim()] = true;
 				}
+				return $pt.LayoutHelper.classSet(css);
 			}
 			return this.isAdditionalCSSDefined() ? this.__cell.css : {};
 		},
@@ -1113,6 +1120,45 @@
 			return this.props.layout;
 		},
 		/**
+		 * component is view mode or not
+		 * @returns {boolean}
+		 */
+		isViewMode: function() {
+			return this.props.view === true;
+		},
+		/**
+		 * render in view mode. default render as a label.
+		 * @returns {XML}
+		 */
+		renderInViewMode: function() {
+			var externalViewModeRenderer = $pt.LayoutHelper.getComponentViewModeRenderer(this.getLayout().getComponentType());
+			if (externalViewModeRenderer) {
+				return externalViewModeRenderer.call(this, this.getModel(), this.getLayout(), this.props.direction, true);
+			}
+
+			var label = null;
+			if (this.getTextInViewMode) {
+				label = this.getTextInViewMode();
+			} else {
+				label = this.getValueFromModel();
+			}
+			var labelLayout = $pt.createCellLayout(this.getId(), $.extend(true, {}, {
+				comp: this.getComponentOption()
+				// css, pos, dataId, evt are all not necessary, since label will not use.
+			}, {
+				label: label,
+				dataId: this.getDataId(),
+				comp: {
+					type: $pt.ComponentConstants.Label,
+					textFromModel: false
+				}
+			}));
+			var parameters = $pt.LayoutHelper.transformParameters(
+				this.getModel(), labelLayout, this.props.direction, true);
+			parameters.ref = 'viewLabel';
+			return <NLabel {...parameters} />;
+		},
+		/**
 		 * get id of component
 		 * @returns {string}
 		 */
@@ -1246,6 +1292,10 @@
 		 * @returns {boolean}
 		 */
 		isEnabled: function () {
+			if (this.isViewMode()) {
+				// always enabled when in view mode
+				return true;
+			}
 			return this.getComponentRuleValue("enabled", true);
 		},
 		/**
@@ -1319,21 +1369,21 @@
 			var _this = this;
 			if (model) {
 				dependencies.forEach(function(key) {
-					model.addListener(key, 'post', 'change', monitor);
+					model.addPostChangeListener(key, monitor);
 				});
 			} else {
 				dependencies.forEach(function (key) {
 					if (typeof key === 'object') {
 						var id = key.id;
 						if (key.on === 'form') {
-							_this.getFormModel().addListener(id, 'post', 'change', monitor);
+							_this.getFormModel().addPostChangeListener(id, monitor);
 						} else if (key.on === 'inner') {
-							_this.getInnerModel().addListener(id, 'post', 'change', monitor);
+							_this.getInnerModel().addPostChangeListener(id, monitor);
 						} else {
-							_this.getModel().addListener(id, "post", "change", monitor);
+							_this.getModel().addPostChangeListener(id, monitor);
 						}
 					} else {
-						_this.getModel().addListener(key, "post", "change", monitor);
+						_this.getModel().addPostChangeListener(key, monitor);
 					}
 				});
 			}
@@ -1350,21 +1400,21 @@
 			var _this = this;
 			if (model) {
 				dependencies.forEach(function(key) {
-					model.addListener(key, 'post', 'change', monitor);
+					model.removePostChangeListener(key, monitor);
 				});
 			} else {
 				dependencies.forEach(function (key) {
 					if (typeof key === 'object') {
 						var id = key.id;
 						if (key.on === 'form') {
-							_this.getFormModel().removeListener(id, 'post', 'change', monitor);
+							_this.getFormModel().removePostChangeListener(id, monitor);
 						} else if (key.on === 'inner') {
-							_this.getInnerModel().removeListener(id, 'post', 'change', monitor);
+							_this.getInnerModel().removePostChangeListener(id, monitor);
 						} else {
-							_this.getModel().removeListener(id, "post", "change", monitor);
+							_this.getModel().removePostChangeListener(id, monitor);
 						}
 					} else {
-						_this.getModel().removeListener(key, "post", "change", monitor);
+						_this.getModel().removePostChangeListener(key, monitor);
 					}
 				});
 			}
@@ -1372,28 +1422,28 @@
 		},
 		// event
 		addPostChangeListener: function (listener) {
-			this.getModel().addListener(this.getDataId(), "post", "change", listener);
+			this.getModel().addPostChangeListener(this.getDataId(), listener);
 		},
 		removePostChangeListener: function (listener) {
-			this.getModel().removeListener(this.getDataId(), "post", "change", listener);
+			this.getModel().removePostChangeListener(this.getDataId(), listener);
 		},
 		addPostAddListener: function (listener) {
-			this.getModel().addListener(this.getDataId(), "post", "add", listener);
+			this.getModel().addPostAddListener(this.getDataId(), listener);
 		},
 		removePostAddListener: function (listener) {
-			this.getModel().removeListener(this.getDataId(), "post", "add", listener);
+			this.getModel().removePostAddListener(this.getDataId(), listener);
 		},
 		addPostRemoveListener: function (listener) {
-			this.getModel().addListener(this.getDataId(), "post", "remove", listener);
+			this.getModel().addPostRemoveListener(this.getDataId(), listener);
 		},
 		removePostRemoveListener: function (listener) {
-			this.getModel().removeListener(this.getDataId(), "post", "remove", listener);
+			this.getModel().removePostRemoveListener(this.getDataId(), listener);
 		},
 		addPostValidateListener: function (listener) {
-			this.getModel().addListener(this.getDataId(), "post", "validate", listener);
+			this.getModel().addPostValidateListener(this.getDataId(), listener);
 		},
 		removePostValidateListener: function (listener) {
-			this.getModel().removeListener(this.getDataId(), "post", "validate", listener);
+			this.getModel().removePostValidateListener(this.getDataId(), listener);
 		}
 	};
 
@@ -1408,6 +1458,7 @@
 	var LayoutHelper = jsface.Class({
 		constructor: function() {
 			this.__comp = {};
+			this.__components = {};
 		},
 		/**
 		 * copy from React.addons.classSet
@@ -1508,7 +1559,62 @@
 				}
 			}
 			return this;
+		},
+		// register components
+		registerComponentRenderer: function (type, func) {
+			if (typeof type !== 'string') {
+				type = type.type;
+			}
+			if (this.__components[type]) {
+				console.warn('Component [' + type + '] is replaced.');
+			}
+			this.__components[type] = func;
+		},
+		getComponentRenderer: function(type) {
+			if (typeof type !== 'string') {
+				type = type.type;
+			}
+			if (this.__components[type]) {
+				return this.__components[type];
+			} else {
+				throw $pt.createComponentException($pt.ComponentConstants.Err_Unsupported_Component,
+					"Component type [" + type + "] is not supported yet.");
+			}
+		},
+		registerComponentViewModeRenderer: function(type, func) {
+			if (typeof type !== 'string') {
+				type = type.type;
+			}
+			type = type + '@view';
+			if (this.__components[type]) {
+				console.warn('Component [' + type + '] is replaced.');
+			}
+			this.__components[type] = func;
+		},
+		getComponentViewModeRenderer: function(type) {
+			if (typeof type !== 'string') {
+				type = type.type;
+			}
+			type = type + '@view';
+			if (this.__components[type]) {
+				return this.__components[type];
+			} else {
+				// no view mode renderer registered yet
+				return null;
+			}
+		},
+		transformParameters: function(model, layout, direction, viewMode) {
+			return {
+				model: model,
+				layout: layout,
+				direction: direction,
+				view: viewMode,
+				ref: layout.getId()
+			};
 		}
 	});
 	$pt.LayoutHelper = new LayoutHelper();
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Nothing, function() {
+		return null;
+	});
 })(this, jQuery);

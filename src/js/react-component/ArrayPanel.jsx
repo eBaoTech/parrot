@@ -36,6 +36,7 @@
  */
 (function (context, $, $pt) {
 	var NArrayPanel = React.createClass($pt.defineCellComponent({
+		displayName: 'NArrayPanel',
 		statics: {
 			UNTITLED: 'Untitled Item'
 		},
@@ -158,7 +159,8 @@
 				<div className='col-sm-12 col-md-12 col-lg-12'>
 					<NPanel model={model}
 					        layout={$pt.createCellLayout('pseudo-panel', cellLayout)}
-					        direction={this.props.direction}/>
+					        direction={this.props.direction}
+							view={this.isViewMode()}/>
 				</div>
 			</div>);
 		},
@@ -238,4 +240,7 @@
 		}
 	}));
 	context.NArrayPanel = NArrayPanel;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.ArrayPanel, function (model, layout, direction, viewMode) {
+		return <NArrayPanel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

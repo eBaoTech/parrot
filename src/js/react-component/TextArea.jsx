@@ -36,6 +36,7 @@
  */
 (function (context, $, $pt) {
 	var NTextArea = React.createClass($pt.defineCellComponent({
+		displayName: 'NTextArea',
 		propTypes: {
 			// model
 			model: React.PropTypes.object,
@@ -122,6 +123,9 @@
 		 * @returns {XML}
 		 */
 		render: function () {
+			if (this.isViewMode()) {
+				return this.renderInViewMode();
+			}
 			var css = {
 				'n-disabled': !this.isEnabled()
 			};
@@ -152,11 +156,12 @@
 		 * @param evt
 		 */
 		onModelChanged: function (evt) {
-			var value = evt.new;
-			if (value == this.getComponent().val()) {
-				return;
-			}
-			this.getComponent().val(evt.new);
+			// var value = evt.new;
+			// if (value == this.getComponent().val()) {
+			// 	return;
+			// }
+			// this.getComponent().val(evt.new);
+			this.forceUpdate();
 		},
 		/**
 		 * on addon clicked
@@ -174,7 +179,17 @@
 		 */
 		getComponent: function () {
 			return $(React.findDOMNode(this.refs.txt));
+		},
+		getTextInViewMode: function() {
+			var value = this.getValueFromModel();
+			if (value != null) {
+				value = value.split(/\r|\n/);
+			}
+			return value;
 		}
 	}));
 	context.NTextArea = NTextArea;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.TextArea, function (model, layout, direction, viewMode) {
+		return <NTextArea {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

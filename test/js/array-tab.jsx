@@ -11,6 +11,14 @@
         dataId: 'items',
         comp: {
             type: $pt.ComponentConstants.ArrayTab,
+            onAdd: function(model, value) {
+                console.log(model);
+                console.log(value);
+            },
+            canActive: function() {
+                console.log(arguments);
+                return true;
+            },
             editLayout: {
                 name: {
                     label: 'Name',
@@ -66,7 +74,7 @@
                             comp: {
                                 type: $pt.ComponentConstants.Button,
                                 click: function() {
-                                    model.remove('items', model.get('items')[0]);
+                                    model.remove('items', model.get('items')[1]);
                                 }
                             },
                             pos: {row: 1, col: 1, width: 6}
@@ -81,22 +89,24 @@
             badge: 'count'
         }
     }));
-    // <div className='col-md-6 col-lg-6 col-sm-6'>
-    //     <span>Normal Array Tab</span>
-    //     <NArrayTab model={model} layout={fixedTitle}/>
-    // </div>
-    // <div className='col-md-6 col-lg-6 col-sm-6'>
-    //     <span>Badge Array Tab</span>
-    //     <NArrayTab model={model} layout={badge}/>
-    // </div>
     var panel = (<div>
         <div className='row'>
-
+            <div className='col-md-6 col-lg-6 col-sm-6'>
+                <span>Normal Array Tab</span>
+                <NArrayTab model={model} layout={fixedTitle}/>
+            </div>
+            <div className='col-md-6 col-lg-6 col-sm-6'>
+                <span>Badge Array Tab</span>
+                <NArrayTab model={model} layout={badge}/>
+            </div>
             <div className='col-md-6 col-lg-6 col-sm-6'>
                 <span>Pill/Justified/Title Monitored Array Tab</span>
                 <NArrayTab model={model} layout={fixedTitlePill}/>
             </div>
-
+            <div className='col-md-6 col-lg-6 col-sm-6'>
+                <span>View Mode</span>
+                <NArrayTab model={model} layout={fixedTitlePill} view={true}/>
+            </div>
         </div>
     </div>);
     React.render(panel, document.getElementById('main'));

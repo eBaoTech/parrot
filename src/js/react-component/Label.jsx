@@ -3,6 +3,7 @@
  */
 (function (context, $, $pt) {
 	var NLabel = React.createClass($pt.defineCellComponent({
+		displayName: 'NLabel',
 		propTypes: {
 			// model
 			model: React.PropTypes.object,
@@ -100,4 +101,7 @@
 		}
 	}));
 	context.NLabel = NLabel;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Label, function (model, layout, direction, viewMode) {
+		return <NLabel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

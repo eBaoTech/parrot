@@ -1,5 +1,6 @@
 (function (context, $, $pt) {
 	var NFile = React.createClass($pt.defineCellComponent({
+		displayName: 'NFile',
 		statics: {},
 		propTypes: {
 			// model
@@ -195,4 +196,7 @@
 		}
 	}));
 	context.NFile = NFile;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.File, function (model, layout, direction, viewMode) {
+		return <NFile {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

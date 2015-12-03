@@ -42,6 +42,7 @@
  */
 (function (context, $, $pt) {
 	var NSelect = React.createClass($pt.defineCellComponent({
+		displayName: 'NSelect',
 		statics: {
 			PLACEHOLDER: "Please Select..."
 		},
@@ -49,7 +50,8 @@
 			// model
 			model: React.PropTypes.object,
 			// CellLayout
-			layout: React.PropTypes.object
+			layout: React.PropTypes.object,
+			view: React.PropTypes.bool
 		},
 		getDefaultProps: function () {
 			return {
@@ -100,6 +102,7 @@
 					minimumResultsForSearch: null,
 					data: null
 				});
+				// TODO might has issue, not clarify yet.
 				this.resetOptions(options);
 			}
 			// reset the value when component update
@@ -217,6 +220,9 @@
 		 * @returns {XML}
 		 */
 		render: function () {
+			if (this.isViewMode()) {
+				return this.renderInViewMode();
+			}
 			var css = {
 				'n-disabled': !this.isEnabled()
 			};
@@ -250,7 +256,8 @@
 				// do nothing
 				return;
 			} else {
-				this.getComponent().val(evt.new).trigger("change");
+				// this.getComponent().val(evt.new).trigger("change");
+				this.forceUpdate();
 			}
 		},
 		/**
@@ -332,6 +339,9 @@
 		 * @param newOptions
 		 */
 		resetOptions: function (newOptions) {
+			if (this.isViewMode()) {
+				return;
+			}
 			// really sucks because select2 doesn't support change the options dynamically
 			var component = this.getComponent();
 			var orgValue = this.getValueFromModel(); //component.val();
@@ -361,6 +371,25 @@
 		},
 		getComponent: function () {
 			return $(React.findDOMNode(this.refs.select));
+		},
+		getTextInViewMode: function() {
+			var value = this.getValueFromModel();
+			if (value != null) {
+				var data = null;
+				if (this.hasParent()) {
+					data = this.getAvailableOptions(this.getParentPropertyValue());
+				} else {
+					data = this.convertDataOptions(this.getComponentOption('data'));
+				}
+				data.some(function(item) {
+					if (item.id == value) {
+						value = item.text;
+						return true;
+					}
+					return false;
+				});
+			}
+			return value;
 		}
 	}));
 
@@ -434,4 +463,7 @@
 		};
 	})(jQuery);
 	context.NSelect = NSelect;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Select, function (model, layout, direction, viewMode) {
+		return <NSelect {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

@@ -1,5 +1,6 @@
 (function(context, $, $pt) {
     var NTree = React.createClass($pt.defineCellComponent({
+        displayName: 'NTree',
         statics: {
             ROOT_LABEL: 'Root',
             FOLDER_ICON: 'folder-o',
@@ -159,7 +160,7 @@
                 }
             });
             model.addPostChangeListener('selected', this.onNodeCheckChanged.bind(this, node, nodeId));
-            return <NCheck model={model} layout={layout} />;
+            return <NCheck model={model} layout={layout} view={this.isViewMode()}/>;
         },
         renderNode: function(parentNodeId, node) {
             var nodeId = this.getNodeId(parentNodeId, node);
@@ -643,4 +644,7 @@
 
     // expose to global
     context.NTree = NTree;
+    $pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Tree, function (model, layout, direction, viewMode) {
+		return <NTree {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

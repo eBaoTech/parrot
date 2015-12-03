@@ -34,6 +34,7 @@
  */
 (function (context, $, $pt) {
 	var NFormButton = React.createClass($pt.defineCellComponent({
+		displayName: 'NFormButton',
 		propTypes: {
 			// model, whole model, not only for this cell
 			// use id to get the value of this cell from model
@@ -236,4 +237,7 @@
 		}
 	}));
 	context.NFormButton = NFormButton;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Button, function (model, layout, direction, viewMode) {
+		return <NFormButton {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

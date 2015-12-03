@@ -37,6 +37,7 @@
  */
 (function (context, $, $pt) {
 	var NPanel = React.createClass($pt.defineCellComponent({
+		displayName: 'NPanel',
 		propTypes: {
 			// model
 			model: React.PropTypes.object,
@@ -124,7 +125,7 @@
 			};
 			return (<div>
 				(
-				<NCheck model={this.getModel()} layout={$pt.createCellLayout('check', layout)}/>
+				<NCheck model={this.getModel()} layout={$pt.createCellLayout('check', layout)} view={this.isViewMode()}/>
 				)
 			</div>);
 		},
@@ -167,7 +168,8 @@
 				return <NFormCell layout={cell}
 				                  model={_this.getModel()}
 				                  ref={cell.getId()}
-				                  direction={_this.props.direction}/>;
+				                  direction={_this.props.direction}
+								  view={_this.isViewMode()}/>;
 			});
 			return (<div className="row">{cells}</div>);
 		},
@@ -387,4 +389,7 @@
 		}
 	}));
 	context.NPanel = NPanel;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Panel, function (model, layout, direction, viewMode) {
+		return <NPanel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

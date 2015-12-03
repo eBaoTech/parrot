@@ -18,198 +18,17 @@
  */
 (function (context, $, $pt) {
 	var NFormCell = React.createClass($pt.defineCellComponent({
+		displayName: 'NFormCell',
 		statics: {
 			REQUIRED_ICON: 'asterisk',
 			TOOLTIP_ICON: 'question-circle',
 			LABEL_WIDTH: 4,
 			__componentRenderer: {},
 			registerComponentRenderer: function (type, func) {
-				NFormCell.__componentRenderer[type] = func;
+				$pt.LayoutHelper.registerComponentRenderer(type, func);
 			},
 			getComponentRenderer: function (type) {
-				if (NFormCell.__componentRenderer[type] == null) {
-					if (NFormCell['__' + type] != null) {
-						NFormCell.registerComponentRenderer(type, NFormCell['__' + type]);
-						return NFormCell.getComponentRenderer(type);
-					} else {
-						throw $pt.createComponentException($pt.ComponentConstants.Err_Unsupported_Component,
-							"Component type[" + type + "] is not supported yet.");
-					}
-				} else {
-					return NFormCell.__componentRenderer[type];
-				}
-			},
-			/**
-			 * render label
-			 * @returns {XML}
-			 * @private
-			 */
-			__label: function (model, layout) {
-				return <NLabel model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render text input
-			 * @returns {XML}
-			 * @private
-			 */
-			__text: function (model, layout) {
-				return <NText model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render text area
-			 * @returns {XML}
-			 * @private
-			 */
-			__textarea: function (model, layout) {
-				return <NTextArea model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render checkbox
-			 * @returns {XML}
-			 * @private
-			 */
-			__check: function (model, layout) {
-				return <NCheck model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			__acheck: function(model, layout) {
-				return <NArrayCheck model={model} layout={layout} ref={layout.getId()} />;
-			},
-			/**
-			 * render toggle button
-			 * @returns {XML}
-			 * @private
-			 */
-			__toggle: function (model, layout) {
-				return <NToggle model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render radio
-			 * @returns {XML}
-			 * @private
-			 */
-			__radio: function (model, layout) {
-				return <NRadio model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render datetime picker
-			 * @returns {XML}
-			 * @private
-			 */
-			__date: function (model, layout) {
-				return <NDateTime model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render select
-			 * @returns {XML}
-			 * @private
-			 */
-			__select: function (model, layout) {
-				return <NSelect model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render search text
-			 * @returns {XML}
-			 * @private
-			 */
-			__search: function (model, layout, direction) {
-				return <NSearchText model={model} layout={layout} direction={direction} ref={layout.getId()}/>;
-			},
-			/**
-			 * render table
-			 * @returns {XML}
-			 * @private
-			 */
-			__table: function (model, layout) {
-				return <NTable model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render tree
-			 * @returns {XML}
-			 * @private
-			 */
-			__tree: function (model, layout) {
-				return <NTree model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render select tree
-			 * @returns {XML}
-			 * @private
-			 */
-			__seltree: function(model, layout) {
-				return <NSelectTree model={model} layout={layout} ref={layout.getId()} />;
-			},
-			/**
-			 * render file
-			 * @return {XML}
-			 * @private
-			 */
-			__file: function (model, layout) {
-				return <NFile model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render button
-			 * @returns {XML}
-			 * @private
-			 */
-			__button: function (model, layout) {
-				return <NFormButton model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render tab
-			 * @returns {XML}
-			 * @private
-			 */
-			__tab: function (model, layout, direction) {
-				return <NFormTab model={model} layout={layout} direction={direction} ref={layout.getId()}/>;
-			},
-			/**
-			 * render array tab
-			 * @returns {XML}
-			 * @private
-			 */
-			__atab: function (model, layout, direction) {
-				return <NArrayTab model={model} layout={layout} direction={direction} ref={layout.getId()}/>;
-			},
-			/**
-			 * render panel
-			 * @returns {XML}
-			 * @private
-			 */
-			__panel: function (model, layout, direction) {
-				return <NPanel model={model} layout={layout} direction={direction} ref={layout.getId()}/>;
-			},
-			/**
-			 * render array panel
-			 * @returns {XML}
-			 * @private
-			 */
-			__apanel: function (model, layout, direction) {
-				return <NArrayPanel model={model} layout={layout} direction={direction} ref={layout.getId()}/>;
-			},
-			/**
-			 * render form
-			 * @returns {XML}
-			 * @private
-			 */
-			__form: function (model, layout, direction) {
-				var formLayout = $pt.createFormLayout(layout.getComponentOption('editLayout'));
-				return <NForm model={model} layout={formLayout} direction={direction} ref={layout.getId()}/>;
-			},
-			/**
-			 * render button footer
-			 * @returns {XML}
-			 * @private
-			 */
-			__buttonfooter: function (model, layout) {
-				return <NFormButtonFooter model={model} layout={layout} ref={layout.getId()}/>;
-			},
-			/**
-			 * render nothing
-			 * @returns {null}
-			 * @private
-			 */
-			__nothing: function () {
-				return null;
+				return $pt.LayoutHelper.getComponentRenderer(type);
 			}
 		},
 		propTypes: {
@@ -218,7 +37,10 @@
 			model: React.PropTypes.object,
 			// CellLayout
 			layout: React.PropTypes.object,
-			direction: React.PropTypes.oneOf(['vertical', 'horizontal'])
+			// label direction
+			direction: React.PropTypes.oneOf(['vertical', 'horizontal']),
+			// is view mode or not
+			view: React.PropTypes.bool
 		},
 		getDefaultProps: function () {
 			return {
@@ -319,7 +141,7 @@
 			var direction = this.props.direction ? this.props.direction : 'vertical';
 			if (componentDefinition.render) {
 				// user defined component
-				return componentDefinition.render.call(this, this.getFormModel(), this.getLayout(), direction);
+				return componentDefinition.render.call(this, this.getFormModel(), this.getLayout(), direction, this.isViewMode());
 			}
 
 			// pre-defined components
@@ -328,7 +150,7 @@
 				type = "text";
 			}
 			return (<div ref="comp">
-				{NFormCell.getComponentRenderer(type).call(this, this.getFormModel(), this.getLayout(), direction)}
+				{$pt.LayoutHelper.getComponentRenderer(type).call(this, this.getFormModel(), this.getLayout(), direction, this.isViewMode())}
 			</div>);
 		},
 		/**
@@ -369,7 +191,20 @@
 		 * @returns {XML}
 		 */
 		render: function () {
-			if (!this.isVisible()) {
+			// when the component is not visible
+			// or declared only view in edit mode
+			// hide it
+			var visible = this.isVisible();
+			if (visible) {
+				var view = this.getComponentOption('view');
+				if (this.isViewMode()) {
+					visible = (view == 'edit') != true;
+				} else if (!this.isViewMode()) {
+					visible = (view == 'view') != true;
+				}
+			}
+
+			if (!visible) {
 				return (<div className={this.getCSSClassName() + ' n-form-cell-invisible'}/>);
 			} else {
 				var css = this.getCSSClassName();

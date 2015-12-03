@@ -1,5 +1,6 @@
 (function(context, $, $pt) {
 	var NSelectTree = React.createClass($pt.defineCellComponent({
+		displayName: 'NSelectTree',
 		statics: {
 		},
 		propTypes: {
@@ -197,7 +198,8 @@
 		},
 		render: function() {
 			var css = {
-				'n-disabled': !this.isEnabled()
+				'n-disabled': !this.isEnabled(),
+				'n-view-mode': this.isViewMode()
 			};
 			css[this.getComponentCSS('n-select-tree')] = true;
 			return (<div className={$pt.LayoutHelper.classSet(css)} tabIndex='0'>
@@ -248,7 +250,7 @@
 			}
 		},
 		onComponentClicked: function() {
-			if (!this.isEnabled()) {
+			if (!this.isEnabled() || this.isViewMode()) {
 				// do nothing
 				return;
 			}
@@ -426,4 +428,7 @@
 		}
 	}));
 	context.NSelectTree = NSelectTree;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.SelectTree, function (model, layout, direction, viewMode) {
+		return <NSelectTree {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

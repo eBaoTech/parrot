@@ -34,6 +34,7 @@
  */
 (function (context, $, $pt) {
 	var NDateTime = React.createClass($pt.defineCellComponent({
+		displayName: 'NDateTime',
 		statics: {
 			FORMAT: 'YYYY/MM/DD',
 			DAY_VIEW_HEADER_FORMAT: 'MMMM YYYY',
@@ -120,7 +121,9 @@
 		 * @override
 		 */
 		componentDidUpdate: function (prevProps, prevState) {
-			this.getComponent().data("DateTimePicker").date(this.getValueFromModel());
+			if (!this.isViewMode()) {
+				this.getComponent().data("DateTimePicker").date(this.getValueFromModel());
+			}
 			// add post change listener
 			this.addPostChangeListener(this.onModelChange);
 			this.addEnableDependencyMonitor();
@@ -132,7 +135,9 @@
 		 */
 		componentDidMount: function () {
 			this.createComponent();
-			this.getComponent().data("DateTimePicker").date(this.getValueFromModel());
+			if (!this.isViewMode()) {
+				this.getComponent().data("DateTimePicker").date(this.getValueFromModel());
+			}
 			// add post change listener
 			this.addPostChangeListener(this.onModelChange);
 			this.addEnableDependencyMonitor();
@@ -272,6 +277,9 @@
 		 * @returns {XML}
 		 */
 		render: function () {
+			if (this.isViewMode()) {
+				return this.renderInViewMode();
+			}
 			var css = {
 				'input-group-addon': true,
 				link: true,
@@ -322,7 +330,8 @@
 		 * @param evt
 		 */
 		onModelChange: function (evt) {
-			this.getComponent().data('DateTimePicker').date(this.convertValueFromModel(evt.new));
+			// this.getComponent().data('DateTimePicker').date(this.convertValueFromModel(evt.new));
+			this.forceUpdate();
 		},
 		/**
 		 * get component
@@ -367,7 +376,18 @@
 		getHeaderYearFormat: function () {
 			var format = this.getComponentOption('headerYearFormat');
 			return format ? format : NDateTime.HEADER_YEAR_FORMAT;
+		},
+		getTextInViewMode: function() {
+			var value = this.getValueFromModel();
+			return value == null ? null : value.format(this.getDisplayFormat());
+		},
+		getDisplayFormat: function() {
+			var format = this.getComponentOption('format');
+			return format ? format : NDateTime.FORMAT;
 		}
 	}));
 	context.NDateTime = NDateTime;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Date, function (model, layout, direction, viewMode) {
+		return <NDateTime {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

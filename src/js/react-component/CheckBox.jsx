@@ -31,6 +31,7 @@
  */
 (function (context, $, $pt) {
 	var NCheck = React.createClass($pt.defineCellComponent({
+		displayName: 'NCheck',
 		propTypes: {
 			// model
 			model: React.PropTypes.object,
@@ -91,13 +92,14 @@
 				if (label == null || label.isEmpty()) {
 					return null;
 				}
+				var enabled = this.isEnabled();
 				var css = {
 					'check-label': true,
 					disabled: !this.isEnabled(),
 					'check-label-left': labelInLeft
 				};
 				return (<span className={$pt.LayoutHelper.classSet(css)}
-				             onClick={this.isEnabled() ? this.onButtonClicked : null}>
+				             onClick={(enabled && !this.isViewMode()) ? this.onButtonClicked : null}>
                 	{this.getLayout().getLabel()}
             	</span>);
 			}
@@ -109,19 +111,21 @@
 		 */
 		renderCheckbox: function () {
 			var checked = this.isChecked();
+			var enabled = this.isEnabled();
 			var css = {
-				disabled: !this.isEnabled(),
+				disabled: !enabled,
 				checked: checked,
 				'check-container': true
 			};
 			return (<div className='check-container'>
-            <span className={$pt.LayoutHelper.classSet(css)}
-                  onClick={this.isEnabled() ? this.onButtonClicked : null}
-                  onKeyUp={this.isEnabled() ? this.onKeyUp: null}
-                  tabIndex='0'
-                  ref='out'>
-            <span className='check' onClick={this.onInnerClicked}/>
-        </span></div>);
+	            <span className={$pt.LayoutHelper.classSet(css)}
+	                  onClick={(enabled && !this.isViewMode()) ? this.onButtonClicked : null}
+	                  onKeyUp={(enabled && !this.isViewMode()) ? this.onKeyUp: null}
+	                  tabIndex='0'
+	                  ref='out'>
+	            	<span className='check' onClick={this.onInnerClicked}/>
+	        	</span>
+			</div>);
 		},
 		/**
 		 * render
@@ -129,7 +133,8 @@
 		 */
 		render: function () {
 			var css = {
-				'n-disabled': !this.isEnabled()
+				'n-disabled': !this.isEnabled(),
+				'n-view-mode': this.isViewMode()
 			};
 			css[this.getComponentCSS('n-checkbox')] = true;
 			var isLabelAtLeft = this.isLabelAtLeft();
@@ -201,4 +206,7 @@
 		}
 	}));
 	context.NCheck = NCheck;
+	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Check, function (model, layout, direction, viewMode) {
+		return <NCheck {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+	});
 }(this, jQuery, $pt));

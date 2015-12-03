@@ -28,7 +28,7 @@
                 }, {
                     label: 'Card B',
                     icon: 'balance-scale',
-                    active: true,
+                    // active: true,
                     editLayout: {
                         name: {
                             label: 'Name in Card B',
@@ -93,7 +93,7 @@
         <div className='row'>
             <div className='col-md-6 col-lg-6 col-sm-6'>
                 <span>Normal Form Tab</span>
-                <NFormTab model={model} layout={layout}/>
+                <NFormTab model={model} layout={layout} />
             </div>
         </div>
         <div className='row'>
@@ -106,6 +106,12 @@
             <div className='col-md-6 col-lg-6 col-sm-6'>
                 <span>Badge Form Tab</span>
                 <NFormTab model={model} layout={badgeLayout}/>
+            </div>
+        </div>
+        <div className='row'>
+            <div className='col-md-6 col-lg-6 col-sm-6'>
+                <span>View Mode</span>
+                <NFormTab model={model} layout={badgeLayout} view={true}/>
             </div>
         </div>
     </div>);
