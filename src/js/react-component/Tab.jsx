@@ -1,7 +1,7 @@
 /**
  * normal tab
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NTab = React.createClass({
 		displayName: 'NTab',
 		propTypes: {
@@ -178,7 +178,7 @@
 		 */
 		setActiveTabIndex: function(index) {
 			if (index < 0 || index >= this.props.tabs.length) {
-				console.warn('Tab index[' + index + '] out of bound.');
+				window.console.warn('Tab index[' + index + '] out of bound.');
 			}
 			this.props.tabs.forEach(function(tab, tabIndex) {
 				tab.active = (tabIndex == index);
@@ -255,5 +255,5 @@
 			}
 		}
 	});
-	context.NTab = NTab;
-}(this, jQuery, $pt));
+	$pt.Components.NTab = NTab;
+}(window, jQuery, React, ReactDOM, $pt));

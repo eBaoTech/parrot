@@ -34,7 +34,7 @@
  *      }
  * }
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NArrayPanel = React.createClass($pt.defineCellComponent({
 		displayName: 'NArrayPanel',
 		statics: {
@@ -110,7 +110,7 @@
 		 * @param item {{}}
 		 * @returns {XML}
 		 */
-		renderItem: function (item) {
+		renderItem: function (item, itemIndex) {
 			var parentModel = this.getModel();
 			var parentValidator = parentModel.getValidator();
 			var validator = null;
@@ -155,9 +155,9 @@
 					collapsedLabel: this.getComponentOption('collapsedLabel')
 				}
 			};
-			return (<div className='row'>
+			return (<div className='row' key={itemIndex}>
 				<div className='col-sm-12 col-md-12 col-lg-12'>
-					<NPanel model={model}
+					<$pt.Components.NPanel model={model}
 					        layout={$pt.createCellLayout('pseudo-panel', cellLayout)}
 					        direction={this.props.direction}
 							view={this.isViewMode()}/>
@@ -239,8 +239,8 @@
 			}
 		}
 	}));
-	context.NArrayPanel = NArrayPanel;
+	$pt.Components.NArrayPanel = NArrayPanel;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.ArrayPanel, function (model, layout, direction, viewMode) {
-		return <NArrayPanel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NArrayPanel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

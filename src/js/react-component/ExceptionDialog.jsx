@@ -2,7 +2,7 @@
  * exception modal dialog
  * z-index is 9999 and 9998, the max z-index.
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NExceptionModal = React.createClass({
 		displayName: 'NExceptionModal',
 		statics: {
@@ -14,12 +14,13 @@
 					if (exceptionContainer.length == 0) {
 						$("<div id='exception_modal_container' />").appendTo($(document.body));
 					}
-					$pt.exceptionDialog = React.render(<NExceptionModal className={className}/>,
+					$pt.exceptionDialog = ReactDOM.render(<$pt.Components.NExceptionModal className={className}/>,
 						document.getElementById("exception_modal_container"));
 				}
 				return $pt.exceptionDialog;
 			},
-			TITLE: 'Exception Raised...'
+			TITLE: 'Exception Raised...',
+			Z_INDEX: 9998
 		},
 		propTypes: {
 			className: React.PropTypes.string
@@ -37,12 +38,7 @@
 		/**
 		 * set z-index
 		 */
-		setZIndex: function () {
-			var div = $(React.findDOMNode(this.refs.body)).closest(".modal");
-			if (div.length > 0) {
-				div.css({"z-index": 9999});
-				div.prev().css({"z-index": 9998});
-			}
+		fixDocumentPadding: function () {
 			document.body.style.paddingRight = 0;
 		},
 		/**
@@ -51,13 +47,21 @@
 		 * @param prevState
 		 */
 		componentDidUpdate: function (prevProps, prevState) {
-			this.setZIndex();
+			this.fixDocumentPadding();
+			$(document).on('keyup', this.onDocumentKeyUp);
 		},
 		/**
 		 * did mount
 		 */
 		componentDidMount: function () {
-			this.setZIndex();
+			this.fixDocumentPadding();
+			$(document).on('keyup', this.onDocumentKeyUp);
+		},
+		componentWillUpdate: function() {
+			$(document).off('keyup', this.onDocumentKeyUp);
+		},
+		componentWillUnmount: function() {
+			$(document).off('keyup', this.onDocumentKeyUp);
 		},
 		/**
 		 * render content
@@ -81,21 +85,43 @@
 			}
 
 			var css = {
-				'n-exception-modal': true
+				'n-exception-modal': true,
+				modal: true,
+				fade: true,
+				in: true
 			};
 			if (this.props.className) {
 				css[this.props.className] = true;
 			}
-			return (<Modal className={$pt.LayoutHelper.classSet(css)} bsStyle="danger"
-			               onHide={this.hide} backdrop="static">
-				<Modal.Header closeButton>
-					<Modal.Title>{NExceptionModal.TITLE}</Modal.Title>
-				</Modal.Header>
-
-				<Modal.Body ref="body">
-					{this.renderContent()}
-				</Modal.Body>
-			</Modal>);
+			return (<div>
+				<div className="modal-backdrop fade in" style={{zIndex: NExceptionModal.Z_INDEX}}></div>
+				<div className={$pt.LayoutHelper.classSet(css)}
+					 tabIndex="-1"
+					 role="dialog"
+					 style={{display: 'block', zIndex: NExceptionModal.Z_INDEX + 1}}>
+					<div className="modal-danger modal-dialog">
+						<div className="modal-content" role="document">
+							<div className="modal-header">
+								<button className="close"
+										onClick={this.hide}
+										aria-label="Close"
+										style={{marginTop: '-2px'}}>
+									<span aria-hidden="true">×</span>
+								</button>
+								<h4 className="modal-title">{NExceptionModal.TITLE}</h4>
+							</div>
+							<div className="modal-body">
+								{this.renderContent()}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>);
+		},
+		onDocumentKeyUp: function(evt) {
+			if (evt.keyCode === 27) { // escape
+				this.hide();
+			}
 		},
 		/**
 		 * hide dialog
@@ -113,5 +139,5 @@
 			this.setState({visible: true, status: status, message: message});
 		}
 	});
-	context.NExceptionModal = NExceptionModal;
-}(this, jQuery, $pt));
+	$pt.Components.NExceptionModal = NExceptionModal;
+}(window, jQuery, React, ReactDOM, $pt));

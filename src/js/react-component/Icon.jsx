@@ -1,11 +1,11 @@
 /**
  * icon based on font-awesome
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NIcon = React.createClass({
 		displayName: 'NIcon',
 		propTypes: {
-			size: React.PropTypes.oneOf(["lg", "2x", "3x", "4x", "5x"]),
+			size: React.PropTypes.string, //React.PropTypes.oneOf(["lg", "2x", "3x", "4x", "5x"]),
 			fixWidth: React.PropTypes.bool,
 
 			icon: React.PropTypes.string.isRequired,
@@ -111,5 +111,5 @@
 			             title={this.props.tooltip}/>;
 		}
 	});
-	context.NIcon = NIcon;
-}(this, jQuery, $pt));
+	$pt.Components.NIcon = NIcon;
+}(window, jQuery, React, ReactDOM, $pt));

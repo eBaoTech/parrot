@@ -1,13 +1,18 @@
-/**
- * depends on jquery, jquery-mockjax(optional), jquery-deparam(optional)
- * depends on NExceptionModal, NOnRequestModal
- */
-(function (context, $) {
-	var $pt = context.$pt;
+(function (window, $, deparam) {
+	var $pt = window.$pt;
 	if ($pt == null) {
 		$pt = {};
-		context.$pt = $pt;
+		window.$pt = $pt;
 	}
+
+	$pt.AjaxConstants = {
+		ContentType: {
+			POST: "application/json; charset=UTF-8",
+			GET: "application/json; charset=UTF-8",
+			DELETE: "application/json; charset=UTF-8",
+			PUT: "application/json; charset=UTF-8"
+		}
+	};
 
 	/**
 	 * submit to server
@@ -33,7 +38,7 @@
 		// show
 		if (quiet === true) {
 		} else {
-			NOnRequestModal.getOnRequestModal().show();
+			$pt.Components.NOnRequestModal.getOnRequestModal().show();
 		}
 
 		return $.ajax(url, options)
@@ -53,17 +58,17 @@
 					if (callback != null) {
 						callback(jqXHR, textStatus, errorThrown);
 					} else {
-						NExceptionModal.getExceptionModal().show("" + jqXHR.status, jqXHR.responseText);
+						$pt.Components.NExceptionModal.getExceptionModal().show("" + jqXHR.status, jqXHR.responseText);
 					}
 				} else {
-					NExceptionModal.getExceptionModal().show("" + jqXHR.status, jqXHR.responseText);
+					$pt.Components.NExceptionModal.getExceptionModal().show("" + jqXHR.status, jqXHR.responseText);
 				}
 			})
 			.always(function () {
 				// hide
 				if (quiet === true) {
 				} else {
-					NOnRequestModal.getOnRequestModal().hide();
+					$pt.Components.NOnRequestModal.getOnRequestModal().hide();
 				}
 			});
 	};
@@ -79,10 +84,11 @@
 		return submit($.extend({
 			method: "POST",
 			dataType: "json",
-			contentType: "application/json; charset=UTF-8"
+			contentType: $pt.AjaxConstants.ContentType.POST
 		}, settings, {
 			url: url,
-			data: JSON.stringify(data)
+			// always send string to server side
+			data: ((typeof data === 'string') ? data : JSON.stringify(data))
 		}));
 	};
 	/**
@@ -96,10 +102,10 @@
 		return submit($.extend({
 			method: "PUT",
 			dataType: "json",
-			contentType: "application/json; charset=UTF-8"
+			contentType: $pt.AjaxConstants.ContentType.PUT
 		}, settings, {
 			url: url,
-			data: JSON.stringify(data)
+			data: ((typeof data === 'string') ? data : JSON.stringify(data))
 		}));
 	};
 	/**
@@ -110,10 +116,13 @@
 	 * @returns {jqXHR}
 	 */
 	$pt.doGet = function (url, data, settings) {
+		if (settings.stringify) {
+			data = (typeof data === 'string') ? data : JSON.stringify(data);
+		}
 		return submit($.extend({
 			method: "GET",
 			dataType: "json",
-			contentType: "text/plain; charset=UTF-8"
+			contentType: $pt.AjaxConstants.ContentType.GET
 		}, settings, {
 			url: url,
 			data: data
@@ -127,10 +136,13 @@
 	 * @returns {jqXHR}
 	 */
 	$pt.doDelete = function (url, data, settings) {
+		if (settings.stringify) {
+			data = (typeof data === 'string') ? data : JSON.stringify(data);
+		}
 		return submit($.extend({
 			method: "DELETE",
 			dataType: "json",
-			contentType: "text/plain; charset=UTF-8"
+			contentType: $pt.AjaxConstants.ContentType.DELETE
 		}, settings, {
 			url: url,
 			data: data
@@ -154,7 +166,6 @@
 	};
 	/**
 	 * get data from url parameters
-	 * include jquery-deparam when call this method
 	 * @returns {*}
 	 */
 	$pt.getUrlData = function (params) {
@@ -173,7 +184,7 @@
 				return {};
 			}
 		}
-		return $.deparam(paramsString);
+		return deparam(paramsString);
 	};
 	/**
 	 * mock ajax
@@ -209,7 +220,7 @@
 	 */
 	$pt.defineURL = function (key, urlRelateToWebContext) {
 		if (routes.urls[key] != null) {
-			console.warn('URL[' + key + '=' + routes.urls[key] + '] was replaced by [' + routes.context + urlRelateToWebContext + ']');
+			window.console.warn('URL[' + key + '=' + routes.urls[key] + '] was replaced by [' + routes.context + urlRelateToWebContext + ']');
 		}
 		routes.urls[key] = urlRelateToWebContext;
 		return $pt;
@@ -223,4 +234,4 @@
 		var url = routes.urls[key];
 		return url == null ? null : (routes.context + url);
 	};
-})(this, jQuery);
+})(window, jQuery, jQuery.deparam);

@@ -1,4 +1,4 @@
-(function(context, $, $pt) {
+(function(window, $, React, ReactDOM, $pt) {
     var NTree = React.createClass($pt.defineCellComponent({
         displayName: 'NTree',
         statics: {
@@ -160,7 +160,7 @@
                 }
             });
             model.addPostChangeListener('selected', this.onNodeCheckChanged.bind(this, node, nodeId));
-            return <NCheck model={model} layout={layout} view={this.isViewMode()}/>;
+            return <$pt.Components.NCheck model={model} layout={layout} view={this.isViewMode()}/>;
         },
         renderNode: function(parentNodeId, node) {
             var nodeId = this.getNodeId(parentNodeId, node);
@@ -174,7 +174,7 @@
                 };
                 opIcon = (<a href='javascript:void(0);'
                             onClick={this.onNodeClicked.bind(this, node, nodeId)}>
-                    <NIcon {...expandableIconAttrs} />
+                    <$pt.Components.NIcon {...expandableIconAttrs} />
                 </a>);
             }
             var folderIconAttrs = {
@@ -184,7 +184,7 @@
             };
             var folderIcon = (<a href='javascript:void(0);'
                             onClick={this.onNodeClicked.bind(this, node, nodeId)}>
-                <NIcon {...folderIconAttrs}/>
+                <$pt.Components.NIcon {...folderIconAttrs}/>
             </a>);
 
             var active = this.isActive(nodeId) ? 'active' : null;
@@ -225,8 +225,8 @@
             return this.isRootPaint() ? this.renderRoot() : this.renderNodes(root, this.getNodeId(null, root));
         },
         renderButtons: function() {
-            var expand = this.state.expandButton ? <NFormButton model={this.getModel()} layout={this.state.expandButton}/> : null;
-            var collapse = this.state.collapseButton ? <NFormButton model={this.getModel()} layout={this.state.collapseButton}/> : null;
+            var expand = this.state.expandButton ? <$pt.Components.NFormButton model={this.getModel()} layout={this.state.expandButton}/> : null;
+            var collapse = this.state.collapseButton ? <$pt.Components.NFormButton model={this.getModel()} layout={this.state.collapseButton}/> : null;
             if (expand || collapse) {
                 return (<span className='buttons'>
                     {expand}{collapse}
@@ -394,20 +394,20 @@
                             hasUncheckedChild = true;
                         }
                     });
-                    // console.log(nodeId);
+                    // window.console.log(nodeId);
                     _this.checkNode(nodeId, !hasUncheckedChild, modelValue);
                     return !hasUncheckedChild;
                 } else {
                     // no children, return checked of myself
-                    // console.log(nodeId);
+                    // window.console.log(nodeId);
                     return _this.isNodeChecked(nodeId, modelValue);
                 }
             };
             checkNodeOnChildren(this.state.root, this.getNodeId(null, this.state.root));
-            // console.log(modelValue);
+            // window.console.log(modelValue);
         },
         expandAll: function() {
-            var activeNodes = this.state.activeNodes;
+            var activeNodes = $.extend({}, this.state.activeNodes);
             var root = this.state.root;
             var expand = function(node, parentNodeId) {
                 if (!this.isLeaf(node)) {
@@ -420,20 +420,58 @@
                 }
             };
             expand.call(this, root, null);
-            this.setState({activeNodes: activeNodes});
+            // this.setState({activeNodes: activeNodes});
+            var _this = this;
+            var previousActiveNodes = null;
+            this.setState(function(previousState, currentProps) {
+                previousActiveNodes = previousState.activeNodes;
+                return {activeNodes: activeNodes};
+            }, function() {
+                _this.notifyEvent({
+                    type: 'expand',
+                    before: previousActiveNodes,
+                    after: activeNodes
+                });
+            });
         },
         collapseAll: function() {
+            var _this = this;
             var root = this.state.root;
+            var nodeIds = null;
             if (this.isRootPaint()) {
-                this.collapseNode(root, this.getNodeId(null, root));
+                // this.collapseNode(root, this.getNodeId(null, root));
+                nodeIds = [this.getNodeId(null, root)];
             } else {
                 var rootNodeId = this.getNodeId(null, root);
                 if (root.children) {
-                    root.children.forEach(function(node) {
-                        this.collapseNode(node, this.getNodeId(rootNodeId, node));
-                    }.bind(this));
+                    // root.children.forEach(function(node) {
+                    //     this.collapseNode(node, this.getNodeId(rootNodeId, node));
+                    // }.bind(this));
+                    nodeIds = root.children.map(function(node) {
+                        return _this.getNodeId(rootNodeId, node);
+                    });
                 }
             }
+            var regexp = new RegExp(nodeIds.map(function(nodeId) {
+                return '(' + nodeId + ')';
+            }).join('|'));
+            var activeNodes = $.extend({}, this.state.activeNodes);
+            Object.keys(activeNodes).forEach(function(key) {
+                if (key.match(regexp)) {
+                    delete activeNodes[key];
+                }
+            });
+            var previousActiveNodes = null;
+            this.setState(function(previousState, currentProps) {
+                previousActiveNodes = previousState.activeNodes;
+                return {activeNodes: activeNodes};
+            }, function() {
+                _this.notifyEvent({
+                    type: 'collapse',
+                    before: previousActiveNodes,
+                    after: activeNodes
+                });
+            });
         },
         isRootPaint: function() {
             return this.getComponentOption('root');
@@ -457,16 +495,28 @@
         },
         collapseNode: function(node, nodeId) {
             var regexp = new RegExp(nodeId);
-            var activeNodes = this.state.activeNodes;
+            var activeNodes = $.extend({}, this.state.activeNodes);
             Object.keys(activeNodes).forEach(function(key) {
                 if (key.match(regexp)) {
                     delete activeNodes[key];
                 }
             });
-            this.setState({activeNodes: activeNodes});
+            // this.setState({activeNodes: activeNodes});
+            var _this = this;
+            var previousActiveNodes = null;
+            this.setState(function(previousState, currentProps) {
+                previousActiveNodes = previousState.activeNodes;
+                return {activeNodes: activeNodes};
+            }, function() {
+                _this.notifyEvent({
+                    type: 'collapse',
+                    before: previousActiveNodes,
+                    after: activeNodes
+                });
+            });
         },
         expandNode: function(node, nodeId) {
-            var activeNodes = this.state.activeNodes;
+            var activeNodes = $.extend({}, this.state.activeNodes);
             if (this.isInactiveSlibingWhenActive() && !this.isLeaf(node)) {
                 // remove all slibings and their children from active list
                 var lastHyphen = nodeId.lastIndexOf(NTree.NODE_SEPARATOR);
@@ -484,7 +534,19 @@
                 }
             }
             activeNodes[nodeId] = node;
-            this.setState({activeNodes: activeNodes});
+            // this.setState({activeNodes: activeNodes});
+            var _this = this;
+            var previousActiveNodes = null;
+            this.setState(function(previousState, currentProps) {
+                previousActiveNodes = previousState.activeNodes;
+                return {activeNodes: activeNodes};
+            }, function() {
+                _this.notifyEvent({
+                    type: 'expand',
+                    before: previousActiveNodes,
+                    after: activeNodes
+                });
+            });
         },
         /**
          * get top level nodes
@@ -643,8 +705,8 @@
     }));
 
     // expose to global
-    context.NTree = NTree;
+    $pt.Components.NTree = NTree;
     $pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Tree, function (model, layout, direction, viewMode) {
-		return <NTree {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NTree {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

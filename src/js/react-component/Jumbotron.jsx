@@ -1,18 +1,18 @@
 /**
  * Jumbortron
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NJumbortron = React.createClass({
 		displayName: 'NJumbortron',
 		propTypes: {
-			highlightText: React.PropTypes.oneOfType(
+			highlightText: React.PropTypes.oneOfType([
 				React.PropTypes.string,
-				React.PropTypes.arrayOf(React.PropTypes.string)).isRequired
+				React.PropTypes.arrayOf(React.PropTypes.string)]).isRequired
 		},
 		renderText: function () {
 			if (Array.isArray(this.props.highlightText)) {
-				return this.props.highlightText.map(function (text) {
-					return <h4>{text}</h4>;
+				return this.props.highlightText.map(function (text, textIndex) {
+					return <h4 key={textIndex}>{text}</h4>;
 				});
 			} else {
 				return <h4>{this.props.highlightText}</h4>;
@@ -26,5 +26,5 @@
 			);
 		}
 	});
-	context.NJumbortron = NJumbortron;
-}(this, jQuery, $pt));
+	$pt.Components.NJumbortron = NJumbortron;
+}(window, jQuery, React, ReactDOM, $pt));

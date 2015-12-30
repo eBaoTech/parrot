@@ -1,8 +1,8 @@
-(function (context, $) {
-	var $pt = context.$pt;
+(function (window, $, jsface, React) {
+	var $pt = window.$pt;
 	if ($pt == null) {
 		$pt = {};
-		context.$pt = $pt;
+		window.$pt = $pt;
 	}
 
 	/**
@@ -1156,7 +1156,7 @@
 			var parameters = $pt.LayoutHelper.transformParameters(
 				this.getModel(), labelLayout, this.props.direction, true);
 			parameters.ref = 'viewLabel';
-			return <NLabel {...parameters} />;
+			return <$pt.Components.NLabel {...parameters} />;
 		},
 		/**
 		 * get id of component
@@ -1192,9 +1192,10 @@
 		/**
 		 * get option
 		 * @param key
+		 * @param defaultValue
 		 */
-		getComponentOption: function (key) {
-			var option = this.getLayout().getComponentOption(key);
+		getComponentOption: function (key, defaultValue) {
+			var option = this.getLayout().getComponentOption(key, defaultValue);
 			if (option == null && this.props.defaultOptions != null) {
 				option = this.props.defaultOptions[key];
 			}
@@ -1232,6 +1233,13 @@
 		getEventMonitor: function (key) {
 			return this.getLayout().getEventMonitor(key);
 		},
+		notifyEvent: function(evt) {
+            var type = evt.type;
+            var monitor = this.getEventMonitor(type);
+			if (monitor) {
+				monitor.call(this, evt);
+			}
+        },
 		/**
 		 * get component rule value.
 		 * get component option by given key. return default value if not defined.
@@ -1566,7 +1574,7 @@
 				type = type.type;
 			}
 			if (this.__components[type]) {
-				console.warn('Component [' + type + '] is replaced.');
+				window.console.warn('Component [' + type + '] is replaced.');
 			}
 			this.__components[type] = func;
 		},
@@ -1587,7 +1595,7 @@
 			}
 			type = type + '@view';
 			if (this.__components[type]) {
-				console.warn('Component [' + type + '] is replaced.');
+				window.console.warn('Component [' + type + '] is replaced.');
 			}
 			this.__components[type] = func;
 		},
@@ -1617,4 +1625,4 @@
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Nothing, function() {
 		return null;
 	});
-})(this, jQuery);
+})(window, jQuery, jsface, React);

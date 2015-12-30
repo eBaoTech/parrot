@@ -1,4 +1,4 @@
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NArrayCheck = React.createClass($pt.defineCellComponent({
 		displayName: 'NArrayCheck',
 		statics: {
@@ -59,7 +59,7 @@
 			this.removeEnableDependencyMonitor();
 			this.unregisterFromComponentCentral();
 		},
-		renderItem: function(enabled, item) {
+		renderItem: function(enabled, item, itemIndex) {
 			var model = $pt.createModel({
 				id: item.id,
 				checked: this.isCodeChecked(item)
@@ -72,7 +72,7 @@
 				}
 			});
 			model.addPostChangeListener('checked', this.onCodeItemCheckedChanged.bind(this, item));
-			return <NCheck model={model} layout={layout} />;
+			return <$pt.Components.NCheck model={model} layout={layout} key={itemIndex}/>;
 		},
 		render: function() {
 			var enabled = this.isEnabled();
@@ -131,8 +131,8 @@
 			});
 		}
 	}));
-	context.NArrayCheck = NArrayCheck;
+	$pt.Components.NArrayCheck = NArrayCheck;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.ArrayCheck, function (model, layout, direction, viewMode) {
-		return <NArrayCheck {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NArrayCheck {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

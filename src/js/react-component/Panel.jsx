@@ -35,7 +35,7 @@
  *      }
  * }
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NPanel = React.createClass($pt.defineCellComponent({
 		displayName: 'NPanel',
 		propTypes: {
@@ -125,7 +125,7 @@
 			};
 			return (<div>
 				(
-				<NCheck model={this.getModel()} layout={$pt.createCellLayout('check', layout)} view={this.isViewMode()}/>
+				<$pt.Components.NCheck model={this.getModel()} layout={$pt.createCellLayout('check', layout)} view={this.isViewMode()}/>
 				)
 			</div>);
 		},
@@ -162,16 +162,17 @@
 		 * render row
 		 * @param row {RowLayout}
 		 */
-		renderRow: function (row) {
+		renderRow: function (row, rowIndex) {
 			var _this = this;
-			var cells = row.getCells().map(function (cell) {
-				return <NFormCell layout={cell}
+			var cells = row.getCells().map(function (cell, cellIndex) {
+				return <$pt.Components.NFormCell layout={cell}
 				                  model={_this.getModel()}
 				                  ref={cell.getId()}
 				                  direction={_this.props.direction}
-								  view={_this.isViewMode()}/>;
+								  view={_this.isViewMode()}
+								  key={'' + rowIndex + '-' + cellIndex}/>;
 			});
-			return (<div className="row">{cells}</div>);
+			return (<div className="row" key={rowIndex}>{cells}</div>);
 		},
 		/**
 		 * render
@@ -359,12 +360,12 @@
 			if (expanded) {
 				if (this.canExpanded()) {
 					// panel can be expanded
-					$(React.findDOMNode(this.refs.body)).slideDown(300, function () {
+					$(ReactDOM.findDOMNode(this.refs.body)).slideDown(300, function () {
 						this.setState({expanded: true});
 					}.bind(this));
 				}
 			} else {
-				$(React.findDOMNode(this.refs.body)).slideUp(300, function () {
+				$(ReactDOM.findDOMNode(this.refs.body)).slideUp(300, function () {
 					this.setState({expanded: false});
 				}.bind(this));
 			}
@@ -388,8 +389,8 @@
 			return true;
 		}
 	}));
-	context.NPanel = NPanel;
+	$pt.Components.NPanel = NPanel;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Panel, function (model, layout, direction, viewMode) {
-		return <NPanel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NPanel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

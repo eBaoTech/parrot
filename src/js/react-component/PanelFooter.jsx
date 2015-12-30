@@ -2,7 +2,7 @@
  * panel footer which only contains buttons
  * depends NFormButton
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NPanelFooter = React.createClass({
 		displayName: 'NPanelFooter',
 		statics: {
@@ -28,26 +28,26 @@
 			cancel: React.PropTypes.func,
 			reset: React.PropTypes.func,
 
-			left: React.PropTypes.arrayOf(React.PropTypes.shape({
-				icon: React.PropTypes.string,
-				text: React.PropTypes.string,
-				style: React.PropTypes.string,
-				click: React.PropTypes.func.isRequired,
-				enabled: React.PropTypes.shape({
-					when: React.PropTypes.func,
-					depends: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.arrayOf(React.PropTypes.string)])
-				})
-			})),
-			right: React.PropTypes.arrayOf(React.PropTypes.shape({
-				icon: React.PropTypes.string,
-				text: React.PropTypes.string,
-				style: React.PropTypes.string, // references to bootstrap styles
-				click: React.PropTypes.func.isRequired,
-				enabled: React.PropTypes.shape({
-					when: React.PropTypes.func,
-					depends: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.arrayOf(React.PropTypes.string)])
-				})
-			})),
+			// left: React.PropTypes.arrayOf(React.PropTypes.shape({
+			// 	icon: React.PropTypes.string,
+			// 	text: React.PropTypes.string,
+			// 	style: React.PropTypes.string,
+			// 	click: React.PropTypes.func.isRequired,
+			// 	enabled: React.PropTypes.oneOfType([React.PropTypes.bool, React.PropTypes.shape({
+			// 		when: React.PropTypes.func,
+			// 		depends: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.arrayOf(React.PropTypes.string)])
+			// 	})])
+			// })),
+			// right: React.PropTypes.arrayOf(React.PropTypes.shape({
+			// 	icon: React.PropTypes.string,
+			// 	text: React.PropTypes.string,
+			// 	style: React.PropTypes.string, // references to bootstrap styles
+			// 	click: React.PropTypes.func.isRequired,
+			// 	enabled: React.PropTypes.oneOfType([React.PropTypes.bool, React.PropTypes.shape({
+			// 		when: React.PropTypes.func,
+			// 		depends: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.arrayOf(React.PropTypes.string)])
+			// 	})])
+			// })),
 
 			// model, pass to click
 			model: React.PropTypes.object,
@@ -107,7 +107,7 @@
 		/**
 		 * render button
 		 */
-		renderButton: function (option) {
+		renderButton: function (option, buttonIndex) {
 			if (this.isViewMode() && option.view == 'edit') {
 				return null;
 			} else if (!this.isViewMode() && option.view == 'view') {
@@ -124,7 +124,9 @@
 					visible: option.visible
 				}
 			};
-			return <NFormButton model={this.getModel()} layout={$pt.createCellLayout('pseudo-button', layout)}/>;
+			return <$pt.Components.NFormButton model={this.getModel()}
+											   layout={$pt.createCellLayout('pseudo-button', layout)}
+											   key={buttonIndex}/>;
 		},
 		/**
 		 * render
@@ -133,7 +135,7 @@
 		render: function () {
 			return (<div className="row n-panel-footer">
 				<div className="col-sm-12 col-md-12 col-lg-12">
-					<ButtonToolbar className="n-panel-footer-left">
+					<div className="btn-toolbar n-panel-footer-left" role='toolbar'>
 						{this.props.reset ? this.renderButton({
 							icon: NPanelFooter.RESET_ICON,
 							text: NPanelFooter.RESET_TEXT,
@@ -151,8 +153,8 @@
 							visible: this.props.validate.visible ? this.props.validate.visible : true
 						}) : null}
 						{this.renderLeftButtons()}
-					</ButtonToolbar>
-					<ButtonToolbar className="n-panel-footer-right">
+					</div>
+					<div className="btn-toolbar n-panel-footer-right" role='toolbar'>
 						{this.props.cancel ? this.renderButton({
 							icon: NPanelFooter.CANCEL_ICON,
 							text: NPanelFooter.CANCEL_TEXT,
@@ -170,7 +172,7 @@
 							visible: this.props.save.visible ? this.props.save.visible : true
 						}) : null}
 						{this.renderRightButtons()}
-					</ButtonToolbar>
+					</div>
 				</div>
 			</div>);
 		},
@@ -185,5 +187,5 @@
 			return this.props.view;
 		}
 	});
-	context.NPanelFooter = NPanelFooter;
-}(this, jQuery, $pt));
+	$pt.Components.NPanelFooter = NPanelFooter;
+}(window, jQuery, React, ReactDOM, $pt));

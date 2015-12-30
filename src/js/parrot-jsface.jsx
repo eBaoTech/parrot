@@ -1,3 +1,0 @@
-(function () {
-	jsface.noConflict();
-})();

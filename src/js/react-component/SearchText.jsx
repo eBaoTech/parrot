@@ -1,7 +1,7 @@
 /**
  * search text
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NSearchText = React.createClass($pt.defineCellComponent({
 		displayName: 'NSearchText',
 		statics: {
@@ -112,12 +112,12 @@
 			this.getComponent().focus();
 		},
 		onComponentFocused: function () {
-			$(React.findDOMNode(this.refs.focusLine)).toggleClass('focus');
-			$(React.findDOMNode(this.refs.normalLine)).toggleClass('focus');
+			$(ReactDOM.findDOMNode(this.refs.focusLine)).toggleClass('focus');
+			$(ReactDOM.findDOMNode(this.refs.normalLine)).toggleClass('focus');
 		},
 		onComponentBlurred: function () {
-			$(React.findDOMNode(this.refs.focusLine)).toggleClass('focus');
-			$(React.findDOMNode(this.refs.normalLine)).toggleClass('focus');
+			$(ReactDOM.findDOMNode(this.refs.focusLine)).toggleClass('focus');
+			$(ReactDOM.findDOMNode(this.refs.normalLine)).toggleClass('focus');
 		},
 		/**
 		 * on component changed
@@ -141,7 +141,7 @@
 		 */
 		showAdvancedSearchDialog: function () {
 			if (!this.state.searchDialog) {
-				this.state.searchDialog = NModalForm.createFormModal(this.getLayout().getLabel(), 'advanced-search-dialog');
+				this.state.searchDialog = $pt.Components.NModalForm.createFormModal(this.getLayout().getLabel(), 'advanced-search-dialog');
 			}
 			this.state.searchDialog.show({
 				model: this.getAdvancedSearchDialogModel(),
@@ -178,7 +178,7 @@
 			if (this.isViewMode()) {
 				var value = this.getValueFromModel();
 				if (value == null) {
-					$(React.findDOMNode(this.refs.viewLabel)).text('');
+					$(ReactDOM.findDOMNode(this.refs.viewLabel)).text('');
 				} else {
 					var label = value;
 					if (text == null) {
@@ -186,10 +186,10 @@
 					} else {
 						label += ' - ' + text;
 					}
-					$(React.findDOMNode(this.refs.viewLabel)).text(label);
+					$(ReactDOM.findDOMNode(this.refs.viewLabel)).text(label);
 				}
 			} else {
-				$(React.findDOMNode(this.refs.label)).val(text);
+				$(ReactDOM.findDOMNode(this.refs.label)).val(text);
 			}
 		},
 		/**
@@ -228,9 +228,9 @@
 					}
 					_this.setLabelText(data.name);
 				}).fail(function() {
-					console.error('Error occured when retrieve label from remote in NSearch.');
+					window.console.error('Error occured when retrieve label from remote in NSearch.');
 					arguments.slice(0).forEach(function(argu) {
-						console.error(argu);
+						window.console.error(argu);
 					});
 				});
 			}, 300);
@@ -257,7 +257,7 @@
 			return this.getComponentOption("searchTriggerDigits");
 		},
 		getComponent: function () {
-			return $(React.findDOMNode(this.refs.code));
+			return $(ReactDOM.findDOMNode(this.refs.code));
 		},
 		// search dialog
 		getAdvancedSearchDialogModel: function () {
@@ -321,7 +321,7 @@
 										}
 										model.mergeCurrentModel(data);
 										model.set('criteria_url', this.getAdvancedSearchUrl());
-										console.debug(model.getCurrentModel());
+										window.console.debug(model.getCurrentModel());
 										this.state.searchDialog.forceUpdate();
 									}.bind(_this)
 								});
@@ -381,8 +381,8 @@
 			return value;
 		}
 	}));
-	context.NSearchText = NSearchText;
+	$pt.Components.NSearchText = NSearchText;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Search, function (model, layout, direction, viewMode) {
-		return <NSearchText {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NSearchText {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

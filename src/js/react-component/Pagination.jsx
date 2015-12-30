@@ -3,7 +3,7 @@
  *
  * NOTE: never jump by itself, must register the toPage and refresh this component manually
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NPagination = React.createClass({
 		displayName: 'NPagination',
 		/**
@@ -137,11 +137,10 @@
 			}
 			var _this = this;
 			return buttons.map(function (index) {
-				var css = {};
-				if (index == _this.getCurrentPageIndex()) {
-					css.active = true;
-				}
-				return (<li>
+				var css = {
+					active: index == _this.getCurrentPageIndex()
+				};
+				return (<li key={index}>
 					<a href="javascript:void(0);"
 					   onClick={_this.toPage}
 					   data-index={index}
@@ -308,12 +307,12 @@
 			if (pageIndex - this.getCurrentPageIndex() == 0) {
 				return;
 			}
-			this.props.currentPageIndex = pageIndex;
-			this.forceUpdate();
+			// this.props.currentPageIndex = pageIndex;
+			// this.forceUpdate();
 			if (this.props.toPage) {
 				this.props.toPage.call(this, pageIndex);
 			}
 		}
 	});
-	context.NPagination = NPagination;
-}(this, jQuery, $pt));
+	$pt.Components.NPagination = NPagination;
+}(window, jQuery, React, ReactDOM, $pt));

@@ -1,7 +1,7 @@
 /**
  * Created by brad.wu on 8/21/2015.
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NLabel = React.createClass($pt.defineCellComponent({
 		displayName: 'NLabel',
 		propTypes: {
@@ -84,8 +84,8 @@
 				css['n-label-' + style] = true;
 			}
 			return (<div className={$pt.LayoutHelper.classSet(css)}>
-				{texts.map(function (text) {
-					return <span>{text}</span>;
+				{texts.map(function (text, textIndex) {
+					return <span key={textIndex}>{text}</span>;
 				})}
 			</div>);
 		},
@@ -100,8 +100,8 @@
 			return this.getComponentOption('textFromModel') !== false;
 		}
 	}));
-	context.NLabel = NLabel;
+	$pt.Components.NLabel = NLabel;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Label, function (model, layout, direction, viewMode) {
-		return <NLabel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NLabel {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

@@ -34,6 +34,38 @@
                 object: {
                     age: 30
                 }
+            },
+            {
+                name: 'Person A',
+                code: 'CodeC',
+                gender: '2',
+                object: {
+                    age: 30
+                }
+            },
+            {
+                name: 'Person B',
+                code: 'CodeC',
+                gender: '2',
+                object: {
+                    age: 30
+                }
+            },
+            {
+                name: 'Person C',
+                code: 'CodeC',
+                gender: '2',
+                object: {
+                    age: 30
+                }
+            },
+            {
+                name: 'Person D',
+                code: 'CodeC',
+                gender: '2',
+                object: {
+                    age: 30
+                }
             }
         ]
     });
@@ -369,9 +401,10 @@
     }));
     var dropdown = $pt.createCellLayout('table', $.extend(true, {}, layoutTemplate, {
         comp: {
-            maxOperationButtonCount: 1,
+            maxOperationButtonCount: 2,
+            operationColumnWidth: 200,
             rowOperations: [{
-                icon: 'cart-plus',
+                // icon: 'cart-plus',
                 tooltip: 'Cart',
                 click: function(row) {
                     alert('Row Clicked, add [' + row.name + '] to cart.');
@@ -383,7 +416,19 @@
                     }
                 }
             }, {
-                // icon: 'hand-paper-o',
+                icon: 'cart-plus',
+                tooltip: 'Cart 2',
+                click: function(row) {
+                    alert('Row Clicked, add [' + row.name + '] to cart 2.');
+                },
+                enabled: {
+                    depends: 'name',
+                    when: function(row) {
+                        return row.get('name') != 'abc';
+                    }
+                }
+            }, {
+                icon: 'hand-paper-o',
                 tooltip: 'Hand',
                 view: 'edit',
                 click: function(row) {
@@ -391,7 +436,9 @@
                     var table = $pt.LayoutHelper.getComponent('test');
                     var columns = this.getComponentOption("columns");
                     columns.splice(0, 1);
-                    table.clearColumnsDefinition();
+                    table.forEach(function(table){
+                        table.clearColumnsDefinition();
+                    })
                 },
                 enabled: {
                     depends: 'name',
@@ -625,5 +672,5 @@
         </div>
         <div style={{height: "500px"}}/>
     </div>);
-    React.render(panel, document.getElementById('main'));
+    ReactDOM.render(panel, document.getElementById('main'));
 })();

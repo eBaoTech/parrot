@@ -46,7 +46,7 @@
  *      }
  * }
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NText = React.createClass($pt.defineCellComponent({
 		displayName: 'NText',
 		statics: {
@@ -101,7 +101,7 @@
 		 */
 		componentDidUpdate: function (prevProps, prevState) {
 			var formattedValue = this.getValueFromModel();
-			if (!$(React.findDOMNode(this.refs.focusLine)).hasClass('focus')) {
+			if (!$(ReactDOM.findDOMNode(this.refs.focusLine)).hasClass('focus')) {
 				formattedValue = this.getFormattedValue(formattedValue);
 			}
 			if (this.getComponent().val() != formattedValue) {
@@ -200,15 +200,15 @@
 			if (icon != null) {
 				iconCss['fa-' + icon] = true;
 			}
-			var iconPart = icon == null ? null : (<span className={$pt.LayoutHelper.classSet(iconCss)}/>);
+			var iconPart = icon == null ? null : (<span className={$pt.LayoutHelper.classSet(iconCss)} key='iconPart'/>);
 			var textPart = addon.text;
 			var innerParts = addon.iconFirst === false ? [textPart, iconPart] : [iconPart, textPart];
 			return (<span className={$pt.LayoutHelper.classSet(spanCss)}
 			              onClick={this.onAddonClicked.bind(this, addon.click)}>
-			{innerParts.map(function (part) {
-				return part;
-			})}
-		</span>);
+				{innerParts.map(function (part) {
+					return part;
+				})}
+			</span>);
 		},
 		/**
 		 * render
@@ -233,19 +233,19 @@
 			</div>);
 		},
 		onComponentFocused: function () {
-			$(React.findDOMNode(this.refs.focusLine)).toggleClass('focus');
-			$(React.findDOMNode(this.refs.normalLine)).toggleClass('focus');
+			$(ReactDOM.findDOMNode(this.refs.focusLine)).toggleClass('focus');
+			$(ReactDOM.findDOMNode(this.refs.normalLine)).toggleClass('focus');
 
 			var value = this.getValueFromModel();
 			if (value == this.getComponent().val()) {
 				return;
 			}
 			this.getComponent().val(value);
-			// console.log("focused: " + this.getValueFromModel());
+			// window.console.log("focused: " + this.getValueFromModel());
 		},
 		onComponentBlurred: function (evt) {
-			$(React.findDOMNode(this.refs.focusLine)).toggleClass('focus');
-			$(React.findDOMNode(this.refs.normalLine)).toggleClass('focus');
+			$(ReactDOM.findDOMNode(this.refs.focusLine)).toggleClass('focus');
+			$(ReactDOM.findDOMNode(this.refs.normalLine)).toggleClass('focus');
 
 			// if (this.state.componentChanged) {
 			// 	clearTimeout(this.state.componentChanged);
@@ -254,7 +254,7 @@
 			if (value && !value.isBlank()) {
 				var formattedValue = this.getFormattedValue(value);
 				if (formattedValue != value) {
-					// console.debug('Change component display formatted value when onBlur.');
+					// window.console.debug('Change component display formatted value when onBlur.');
 					this.getComponent().val(formattedValue);
 				}
 			}
@@ -265,7 +265,7 @@
 		 * @param evt
 		 */
 		onComponentChanged: function (evt) {
-			// console.debug('Text component changed[modelValue=' + this.getValueFromModel() + ', compValue=' + evt.target.value + '].');
+			// window.console.debug('Text component changed[modelValue=' + this.getValueFromModel() + ', compValue=' + evt.target.value + '].');
 			this.setValueToModel(evt.target.value);
 		},
 		/**
@@ -277,19 +277,19 @@
 			// return;
 			//
 			// var formattedValue = this.getValueFromModel();
-			// if (!$(React.findDOMNode(this.refs.focusLine)).hasClass('focus')) {
+			// if (!$(ReactDOM.findDOMNode(this.refs.focusLine)).hasClass('focus')) {
 			// 	formattedValue = this.getFormattedValue(formattedValue);
 			// }
 			// if (formattedValue == this.getComponent().val()) {
 			// 	return;
 			// }
-			// // console.debug('Text model changed[modelValue=' + evt.new + ', compValue=' + this.getComponent().val() + '].');
+			// // window.console.debug('Text model changed[modelValue=' + evt.new + ', compValue=' + this.getComponent().val() + '].');
 			// this.getComponent().val(formattedValue);
 		},
 		onKeyUp: function (evt) {
 			var monitor = this.getEventMonitor('keyUp');
 			if (monitor) {
-				monitor.call(evt.target, evt);
+				monitor.call(this, evt);
 			}
 		},
 		/**
@@ -307,7 +307,7 @@
 		 * @override
 		 */
 		getComponent: function () {
-			return $(React.findDOMNode(this.refs.txt));
+			return $(ReactDOM.findDOMNode(this.refs.txt));
 		},
 		/**
 		 * is add-on clickable
@@ -361,8 +361,8 @@
 			}
 		}
 	}));
-	context.NText = NText;
+	$pt.Components.NText = NText;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Text, function (model, layout, direction, viewMode) {
-		return <NText {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NText {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

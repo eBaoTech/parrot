@@ -1,12 +1,8 @@
-/**
- * depends on jsface
- * depends on parrot-ajax, parrot-jsface
- */
-(function (context, $) {
-	var $pt = context.$pt;
+(function (window, $, jsface) {
+	var $pt = window.$pt;
 	if ($pt == null) {
 		$pt = {};
-		context.$pt = $pt;
+		window.$pt = $pt;
 	}
 
 	/**
@@ -335,4 +331,4 @@
 	$pt.createCodeTable = function (items, renderer, sorter) {
 		return new CodeTable(items, renderer, sorter);
 	};
-})(this, jQuery);
+})(window, jQuery, jsface);

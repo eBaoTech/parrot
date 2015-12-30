@@ -3,7 +3,7 @@
  *
  * depends NPanelFooter, NForm, NConfirm
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NModalForm = React.createClass({
 		displayName: 'NModalForm',
 		statics: {
@@ -30,7 +30,7 @@
 				if (className) {
 					css[className] = true;
 				}
-				return React.render(<NModalForm title={title} className={$pt.LayoutHelper.classSet(css)}
+				return ReactDOM.render(<$pt.Components.NModalForm title={title} className={$pt.LayoutHelper.classSet(css)}
 				                                zIndex={$pt.formModalIndex}/>,
 					document.getElementById(containerId));
 			},
@@ -55,26 +55,14 @@
 		/**
 		 * set z-index
 		 */
-		setZIndex: function () {
-			if (this.props.zIndex != undefined) {
-				var div = $(React.findDOMNode(this.refs.body)).closest(".modal");
-				if (div.length > 0) {
-					div.css({
-						"z-index": this.props.zIndex * 1 + 1
-					});
-					div.prev().css({
-						"z-index": this.props.zIndex * 1
-					});
-					div.removeAttr('tabIndex');
-				}
-			}
+		fixDocumentPadding: function () {
 			document.body.style.paddingRight = 0;
 		},
 		setDraggable: function() {
 			if (!this.isDraggable() || !this.refs.top) {
 				return;
 			}
-			var top = $(React.findDOMNode(this.refs.top));
+			var top = $(ReactDOM.findDOMNode(this.refs.top));
 			var modal = top.children('.modal');
 			modal.drags({handle: '.modal-header'});
 			modal.css({
@@ -129,7 +117,7 @@
 		},
 		stopDraggable: function() {
 			if (this.refs.top) {
-				var top = $(React.findDOMNode(this.refs.top));
+				var top = $(ReactDOM.findDOMNode(this.refs.top));
 				var modal = top.children('.modal');
 				modal.stopDrags({handle: '.modal-header'});
 			}
@@ -140,21 +128,33 @@
 		 * @param prevState
 		 */
 		componentDidUpdate: function (prevProps, prevState) {
-			this.setZIndex();
+			this.fixDocumentPadding();
 			this.setDraggable();
+			if (this.isDialogCloseShown()) {
+				$(document).on('keyup', this.onDocumentKeyUp);
+			}
 		},
 		componentWillUpdate: function() {
 			this.stopDraggable();
+			if (this.isDialogCloseShown()) {
+				$(document).off('keyup', this.onDocumentKeyUp);
+			}
 		},
 		/**
 		 * did mount
 		 */
 		componentDidMount: function () {
-			this.setZIndex();
+			this.fixDocumentPadding();
 			this.setDraggable();
+			if (this.isDialogCloseShown()) {
+				$(document).on('keyup', this.onDocumentKeyUp);
+			}
 		},
-		componentDidUnmount: function() {
+		componentWillUnmount: function() {
 			this.stopDraggable();
+			if (this.isDialogCloseShown()) {
+				$(document).off('keyup', this.onDocumentKeyUp);
+			}
 		},
 		/**
 		 * render footer
@@ -164,8 +164,8 @@
 			if (this.state.footer === false || !this.state.expanded) {
 				return <div ref='footer'/>;
 			} else {
-				return (<Modal.Footer className="n-modal-form-footer" ref='footer'>
-					<NPanelFooter reset={this.getResetButton()}
+				return (<div className="n-modal-form-footer modal-footer" ref='footer'>
+					<$pt.Components.NPanelFooter reset={this.getResetButton()}
 					              validate={this.getValidationButton()}
 					              save={this.getSaveButton()}
 					              cancel={this.getCancelButton()}
@@ -173,17 +173,32 @@
 					              right={this.getRightButton()}
 					              model={this.getModel()}
 								  view={this.isViewMode()}/>
-				</Modal.Footer>);
+				</div>);
 			}
 		},
 		renderBody: function() {
-			return (<Modal.Body ref="body" className={!this.state.expanded ? 'hide': null}>
-				<NForm model={this.getModel()}
+			var css = {
+				'modal-body': true,
+				hide: !this.state.expanded
+			};
+			return (<div className={$pt.LayoutHelper.classSet(css)}>
+				<$pt.Components.NForm model={this.getModel()}
 					   layout={this.getLayout()}
 					   direction={this.getDirection()}
 					   view={this.isViewMode()}
 				       ref="form"/>
-			</Modal.Body>);
+			</div>);
+		},
+		renderCloseButton: function() {
+			if (this.isDialogCloseShown()) {
+				return (<button className="close"
+						onClick={this.hide}
+						aria-label="Close"
+						style={{marginTop: '-2px'}}>
+					<span aria-hidden="true">×</span>
+				</button>);
+			}
+			return null;
 		},
 		/**
 		 * render
@@ -197,13 +212,38 @@
 			if (this.isCollapsible()) {
 				title = (<a href='javascript:void(0);' onClick={this.onTitleClicked}>{title}</a>);
 			}
-			return (<Modal className={this.props.className} backdrop="static" onHide={this.hide} ref='top'>
-				<Modal.Header closeButton={this.isDialogCloseShown()}>
-					<Modal.Title>{title}</Modal.Title>
-				</Modal.Header>
-				{this.renderBody()}
-				{this.renderFooter()}
-			</Modal>);
+			var css = {
+				'n-confirm': true,
+				modal: true,
+				fade: true,
+				in: true
+			};
+			if (this.props.className) {
+				css[this.props.className] = true;
+			}
+			// tabindex="0"
+			return (<div ref='top'>
+				<div className="modal-backdrop fade in" style={{zIndex: this.props.zIndex * 1}}></div>
+				<div className={$pt.LayoutHelper.classSet(css)}
+					 role="dialog"
+					 style={{display: 'block', zIndex: this.props.zIndex * 1 + 1}}>
+					<div className="modal-dialog">
+						<div className="modal-content" role="document">
+							<div className="modal-header">
+								{this.renderCloseButton()}
+								<h4 className="modal-title">{title}</h4>
+							</div>
+							{this.renderBody()}
+							{this.renderFooter()}
+						</div>
+					</div>
+				</div>
+			</div>);
+		},
+		onDocumentKeyUp: function(evt) {
+			if (evt.keyCode === 27) { // escape
+				this.hide();
+			}
 		},
 		/**
 		 * on title clicked
@@ -220,7 +260,7 @@
 				this.getModel().reset();
 				this.refs.form.forceUpdate();
 			};
-			NConfirm.getConfirmModal().show(NModalForm.RESET_CONFIRM_TITLE,
+			$pt.Components.NConfirm.getConfirmModal().show(NModalForm.RESET_CONFIRM_TITLE,
 				NModalForm.RESET_CONFIRM_MESSAGE,
 				reset.bind(this));
 		},
@@ -238,9 +278,9 @@
 			if (this.state.buttons && (typeof this.state.buttons.cancel === 'function')) {
 				this.hide();
 			} else {
-				NConfirm.getConfirmModal().show(NModalForm.CANCEL_CONFIRM_TITLE,
+				$pt.Components.NConfirm.getConfirmModal().show(NModalForm.CANCEL_CONFIRM_TITLE,
 					NModalForm.CANCEL_CONFIRM_MESSAGE,
-					this.hide.bind(this));
+					this.hide);
 			}
 		},
 		/**
@@ -288,7 +328,7 @@
 			} else if (this.isViewMode()) {
 				return null;
 			} else {
-				return this.onValidateClicked.bind(this);
+				return this.onValidateClicked;
 			}
 		},
 		/**
@@ -299,7 +339,7 @@
 			if (this.state.buttons && this.state.buttons.cancel === false) {
 				return null;
 			} else {
-				return this.onCancelClicked.bind(this);
+				return this.onCancelClicked;
 			}
 		},
 		/**
@@ -312,7 +352,7 @@
 			} else if (this.isViewMode()) {
 				return null;
 			} else {
-				return this.onResetClicked.bind(this);
+				return this.onResetClicked;
 			}
 		},
 		/**
@@ -421,7 +461,7 @@
 					view: model.view === true
 				});
 			} else {
-				console.warn("Properties [draggable, expanded, collapsible, pos] are not supported in parameters, use JSON parameter instead.");
+				window.console.warn("Properties [draggable, expanded, collapsible, pos] are not supported in parameters, use JSON parameter instead.");
 				this.setState({
 					visible: true,
 					model: model,
@@ -439,7 +479,7 @@
 			}
 		}
 	});
-	context.NModalForm = NModalForm;
+	$pt.Components.NModalForm = NModalForm;
 
 	$.fn.drags = function(opt) {
 		opt = $.extend({handle:"",cursor:"move"}, opt);
@@ -500,4 +540,4 @@
 
 		return $el.off('mousedown mouseup');
 	};
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

@@ -3,7 +3,7 @@
  *
  * depends NIcon, NText, NModalForm, NConfirm, NPagination
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NTable = React.createClass($pt.defineCellComponent({
 		displayName: 'NTable',
 		statics: {
@@ -40,11 +40,11 @@
 			PAGE_JUMPING_PROXY: null,
 			registerInlineEditor: function(type, definition) {
 				if (NTable.__inlineEditors[type] != null) {
-					console.warn("Inline editor[" + type + "] is repalced.");
-					console.warn("From:");
-					console.warn(NTable.__inlineEditors[type]);
-					console.warn("To:");
-					console.warn(definition);
+					window.console.warn("Inline editor[" + type + "] is repalced.");
+					window.console.warn("From:");
+					window.console.warn(NTable.__inlineEditors[type]);
+					window.console.warn("To:");
+					window.console.warn(definition);
 				}
 				NTable.__inlineEditors[type] = definition;
 			},
@@ -188,7 +188,7 @@
 		detachListeners: function () {
 			this.getScrollBodyComponent().off("scroll");
 			this.getDivComponent().off("mouseenter", "tbody tr").off("mouseleave", "tbody tr");
-			$(React.findDOMNode(this.refs[this.getHeaderLabelId()])).popover("destroy");
+			$(ReactDOM.findDOMNode(this.refs[this.getHeaderLabelId()])).popover("destroy");
 			this.removePostChangeListener(this.onModelChanged);
 			this.state.searchModel.removePostChangeListener('text', this.onSearchBoxChanged);
 			this.removePostRemoveListener(this.onModelChanged);
@@ -259,21 +259,21 @@
 			});
 		},
 		isIE: function () {
-			return $.browser.msie;
+			return $pt.browser.msie;
 		},
 		/**
 		 * check browser is IE8 or not
 		 * @returns {boolean}
 		 */
 		isIE8: function () {
-			return $.browser.msie && $.browser.versionNumber == 8;
+			return $pt.browser.msie && $pt.browser.version == 8;
 		},
 		/**
 		 * check browser is firefox or not
 		 * @returns {boolean}
 		 */
 		isFirefox: function () {
-			return $.browser.mozilla;
+			return $pt.browser.mozilla;
 		},
 		/**
 		 * prepare display options
@@ -318,34 +318,14 @@
 					return operation.view != 'view';
 				}
 			});
-			var hasUserDefinedRowOperations = rowOperations.length != 0;
-			if (editable || removable || hasUserDefinedRowOperations) {
+			if (editable || removable || rowOperations.length != 0) {
 				config = {
 					editable: editable,
 					removable: removable,
 					rowOperations: rowOperations,
-					title: ""
+					title: "",
+					width: this.calcOperationColumnWidth(editable, removable, rowOperations)
 				};
-				var maxButtonCount = this.getComponentOption('maxOperationButtonCount');
-				if (maxButtonCount) {
-					var actualButtonCount = (config.editable ? 1 : 0) + (config.removable ? 1: 0) + rowOperations.length;
-					if (maxButtonCount > actualButtonCount) {
-						// no button in popover
-						config.width = (config.editable ? NTable.__operationButtonWidth : 0) + (config.removable ? NTable.__operationButtonWidth : 0);
-						if (hasUserDefinedRowOperations) {
-							config.width += NTable.__operationButtonWidth * config.rowOperations.length;
-						}
-					} else {
-						// still some buttons in popover
-						config.width = (maxButtonCount + 1) * NTable.__operationButtonWidth;
-					}
-				} else {
-					config.width = (config.editable ? NTable.__operationButtonWidth : 0) + (config.removable ? NTable.__operationButtonWidth : 0);
-					if (hasUserDefinedRowOperations) {
-						config.width += NTable.__operationButtonWidth * config.rowOperations.length;
-					}
-				}
-				config.width = config.width < NTable.__minOperationButtonWidth ? NTable.__minOperationButtonWidth : config.width;
 				this.state.columns.push(config);
 				if (this.fixedRightColumns > 0 || this.getComponentOption("operationFixed") === true) {
 					this.fixedRightColumns++;
@@ -378,13 +358,40 @@
 				}
 			}
 		},
+		calcOperationColumnWidth: function(editable, removable, rowOperations) {
+			var width = this.getComponentOption('operationColumnWidth');
+			if (width != null) {
+				return width;
+			}
+
+			var maxButtonCount = this.getComponentOption('maxOperationButtonCount');
+			if (maxButtonCount) {
+				var actualButtonCount = (editable ? 1 : 0) + (removable ? 1: 0) + rowOperations.length;
+				if (maxButtonCount > actualButtonCount) {
+					// no button in popover
+					width = (editable ? NTable.__operationButtonWidth : 0) + (removable ? NTable.__operationButtonWidth : 0);
+					if (rowOperations.length != 0) {
+						width += NTable.__operationButtonWidth * rowOperations.length;
+					}
+				} else {
+					// still some buttons in popover
+					width = (maxButtonCount + 1) * NTable.__operationButtonWidth;
+				}
+			} else {
+				width = (editable ? NTable.__operationButtonWidth : 0) + (removable ? NTable.__operationButtonWidth : 0);
+				if (rowOperations.length != 0) {
+					width += NTable.__operationButtonWidth * rowOperations.length;
+				}
+			}
+			return width < NTable.__minOperationButtonWidth ? NTable.__minOperationButtonWidth : width;
+		},
 		/**
 		 * render search  box
 		 * @returns {XML}
 		 */
 		renderSearchBox: function () {
 			if (this.isSearchable()) {
-				return (<NText model={this.state.searchModel} layout={this.state.searchLayout}/>);
+				return (<$pt.Components.NText model={this.state.searchModel} layout={this.state.searchLayout}/>);
 			} else {
 				return null;
 			}
@@ -401,7 +408,7 @@
 				           ref='add-button' style={{
 					display: this.state.expanded ? 'block' : 'none'
 				}}>
-					<NIcon icon={NTable.ADD_BUTTON_ICON}/>
+					<$pt.Components.NIcon icon={NTable.ADD_BUTTON_ICON}/>
 					{NTable.ADD_BUTTON_TEXT}
 				</a>);
 			} else {
@@ -445,7 +452,7 @@
 						return "<span style='display:block'>" + NTable.DETAIL_ERROR_MESSAGE + "</span>";
 					}
 				});
-				$(React.findDOMNode(this.refs[this.getHeaderLabelId()])).popover({
+				$(ReactDOM.findDOMNode(this.refs[this.getHeaderLabelId()])).popover({
 					placement: 'top',
 					trigger: 'hover',
 					html: true,
@@ -496,7 +503,7 @@
 				}
 				return (<a href="javascript:void(0);" className={sortClass}
 				           onClick={this.onSortClicked.bind(this, column)}>
-					<NIcon icon={icon}/>
+					<$pt.Components.NIcon icon={icon}/>
 				</a>);
 			}
 		},
@@ -531,7 +538,7 @@
 					_this.forceUpdate();
 				}
 			});
-			return <NCheck model={model} layout={layout}/>;
+			return <$pt.Components.NCheck model={model} layout={layout}/>;
 		},
 		/**
 		 * render heading content.
@@ -548,31 +555,31 @@
 			var columnIndex = 0;
 			var _this = this;
 			return (<thead>
-			<tr>
-				{this.state.columns.map(function (column) {
-					if (columnIndex >= indexToRender.min && columnIndex <= indexToRender.max) {
-						// column is fixed.
-						columnIndex++;
-						var style = {};
-						style.width = column.width;
-						if (!(column.visible === undefined || column.visible === true)) {
-							style.display = "none";
-						}
-						if (column.rowSelectable) {
-							return (<td style={style}>
-								{_this.renderTableHeaderCheckBox(column)}
-							</td>);
+				<tr>
+					{this.state.columns.map(function (column) {
+						if (columnIndex >= indexToRender.min && columnIndex <= indexToRender.max) {
+							// column is fixed.
+							columnIndex++;
+							var style = {};
+							style.width = column.width;
+							if (!(column.visible === undefined || column.visible === true)) {
+								style.display = "none";
+							}
+							if (column.rowSelectable) {
+								return (<td style={style} key={columnIndex}>
+									{_this.renderTableHeaderCheckBox(column)}
+								</td>);
+							} else {
+								return (<td style={style} key={columnIndex}>
+									{column.title}
+									{_this.renderTableHeaderSortButton(column)}
+								</td>);
+							}
 						} else {
-							return (<td style={style}>
-								{column.title}
-								{_this.renderTableHeaderSortButton(column)}
-							</td>);
+							columnIndex++;
 						}
-					} else {
-						columnIndex++;
-					}
-				})}
-			</tr>
+					})}
+				</tr>
 			</thead>);
 		},
 		renderRowEditButton: function(rowModel) {
@@ -588,7 +595,7 @@
 					comp: 'n-table-op-btn'
 				}
 			});
-			return <NFormButton model={rowModel} layout={layout} />;
+			return <$pt.Components.NFormButton model={rowModel} layout={layout} />;
 		},
 		renderRowRemoveButton: function(rowModel) {
 			var layout = $pt.createCellLayout('removeButton', {
@@ -603,10 +610,11 @@
 					comp: 'n-table-op-btn'
 				}
 			});
-			return <NFormButton model={rowModel} layout={layout} />;
+			return <$pt.Components.NFormButton model={rowModel} layout={layout} />;
 		},
-		renderRowOperationButton: function(operation, rowModel) {
+		renderRowOperationButton: function(operation, rowModel, operationIndex) {
 			var layout = $pt.createCellLayout('rowButton', {
+				label: operation.icon ? null : operation.tooltip,
 				comp: {
 					style: 'link',
 					icon: operation.icon,
@@ -618,7 +626,7 @@
 					comp: 'n-table-op-btn'
 				}
 			});
-			return <NFormButton model={rowModel} layout={layout} />;
+			return <$pt.Components.NFormButton model={rowModel} layout={layout} key={operationIndex}/>;
 		},
 		getRowOperations: function(column) {
 			var rowOperations = column.rowOperations;
@@ -635,13 +643,13 @@
 			var removeButton = column.removable ? this.renderRowRemoveButton(rowModel) : null;
 			var rowOperations = this.getRowOperations(column);
 			var _this = this;
-			return (<ButtonGroup className="n-table-op-btn-group">
-				{rowOperations.map(function (operation) {
-					return _this.renderRowOperationButton(operation, rowModel);
+			return (<div className="btn-group n-table-op-btn-group" role='group'>
+				{rowOperations.map(function (operation, operationIndex) {
+					return _this.renderRowOperationButton(operation, rowModel, operationIndex);
 				})}
 				{editButton}
 				{removeButton}
-			</ButtonGroup>);
+			</div>);
 		},
 		renderPopoverContainer: function() {
 			if (this.state.popoverDiv == null) {
@@ -669,7 +677,7 @@
 				return operation.icon != null;
 			});
 			var _this = this;
-			var renderOperation = function(operation) {
+			var renderOperation = function(operation, operationIndex) {
 				var layout = $pt.createCellLayout('rowButton', {
 					label: operation.tooltip,
 					comp: {
@@ -682,15 +690,16 @@
 						comp: 'n-table-op-btn'
 					}
 				});
-				return (<li>
-					<NFormButton model={rowModel} layout={layout} />
+				return (<li key={operationIndex}>
+					<$pt.Components.NFormButton model={rowModel} layout={layout} />
 				</li>);
 			};
 			return (<ul className='nav'>{moreOperations.map(renderOperation)}</ul>);
 		},
 		renderPopoverAsIcon: function(moreOperations, rowModel) {
-			return moreOperations.map(function(operation) {
-				return _this.renderRowOperationButton(operation, rowModel);
+			var _this = this;
+			return moreOperations.map(function(operation, operationIndex) {
+				return _this.renderRowOperationButton(operation, rowModel, operationIndex);
 			});
 		},
 		renderPopover: function(moreOperations, rowModel, eventTarget) {
@@ -701,7 +710,7 @@
 			styles.left = offset.left;
 
 			var _this = this;
-			React.render((<div role="tooltip" className="n-table-op-btn-popover popover bottom in" style={styles}>
+			ReactDOM.render((<div role="tooltip" className="n-table-op-btn-popover popover bottom in" style={styles}>
 				<div className="arrow"></div>
 				<div className="popover-content">
 					{this.isRenderMoreOperationButtonsAsIcon(moreOperations) ?
@@ -727,7 +736,7 @@
 		hidePopover: function() {
 			if (this.state.popoverDiv && this.state.popoverDiv.is(':visible')) {
 				this.state.popoverDiv.hide();
-				React.render(<noscript/>, this.state.popoverDiv.get(0));
+				ReactDOM.render(<noscript/>, this.state.popoverDiv.get(0));
 			}
 		},
 		destroyPopover: function() {
@@ -766,7 +775,7 @@
 					comp: 'n-table-op-btn more'
 				}
 			});
-			return <NFormButton model={rowModel} layout={layout} />;
+			return <$pt.Components.NFormButton model={rowModel} layout={layout} key='more-op'/>;
 		},
 		/**
 		 * render dropdown operation cell, only buttons which before maxButtonCount are renderred as a line,
@@ -784,13 +793,13 @@
 			var _this = this;
 			var used = -1;
 			var buttons = [];
-			rowOperations.some(function(operation) {
+			rowOperations.some(function(operation, operationIndex) {
 				if (operation.editButton) {
 					buttons.push(_this.renderRowEditButton(rowModel));
 				} else if (operation.removeButton) {
 					buttons.push(_this.renderRowRemoveButton(rowModel));
 				} else {
-					buttons.push(_this.renderRowOperationButton(operation, rowModel));
+					buttons.push(_this.renderRowOperationButton(operation, rowModel, operationIndex));
 				}
 				used++;
 				return maxButtonCount - used == 1;
@@ -801,9 +810,9 @@
 				buttons.push(this.renderRowOperationMoreButton(rowOperations.slice(used + 1), rowModel));
 			}
 
-			return (<ButtonGroup className="n-table-op-btn-group">
+			return (<div className="btn-group n-table-op-btn-group" role='group'>
 				{buttons}{dropdown}
-			</ButtonGroup>);
+			</div>);
 		},
 		/**
 		 * render operation cell
@@ -844,7 +853,7 @@
 					type: $pt.ComponentConstants.Check
 				}
 			});
-			return (<NCheck model={model} layout={layout}/>);
+			return (<$pt.Components.NCheck model={model} layout={layout}/>);
 		},
 		/**
 		 * render table body rows
@@ -874,7 +883,7 @@
 			}
 
 			var inlineModel = this.createInlineRowModel(row);
-			return (<tr className={className}>{
+			return (<tr className={className} key={rowIndex}>{
 				this.state.columns.map(function (column) {
 					if (columnIndex >= indexToRender.min && columnIndex <= indexToRender.max) {
 						// column is fixed.
@@ -889,7 +898,7 @@
 						if (column.editable || column.removable || column.rowOperations != null) {
 							// operation column
 							data = _this.renderOperationCell(column, inlineModel);
-							style['text-align'] = "center";
+							style.textAlign = "center";
 						} else if (column.indexable) {
 							// index column
 							data = rowIndex;
@@ -912,7 +921,7 @@
 									}
 								}
 								// pre-defined, use with data together
-								data = <NFormCell model={inlineModel}
+								data = <$pt.Components.NFormCell model={inlineModel}
 												  layout={$pt.createCellLayout(column.data, layout)}
 												  direction='horizontal'
 												  view={_this.isViewMode()}/>;
@@ -923,7 +932,7 @@
 								} else {
 									column.inline.css = {cell: 'inline-editor'};
 								}
-								data = <NFormCell model={inlineModel}
+								data = <$pt.Components.NFormCell model={inlineModel}
 												  layout={$pt.createCellLayout(column.data, column.inline)}
 												  direction='horizontal'
 												  view={_this.isViewMode()}
@@ -931,16 +940,16 @@
 							} else {
 								// any other, treat as form layout
 								// column.data is not necessary
-								data = <NForm model={inlineModel}
+								data = <$pt.Components.NForm model={inlineModel}
 											  layout={$pt.createFormLayout(column.inline)}
 											  direction='horizontal'
-											  view={this.isViewMode()} />;
+											  view={_this.isViewMode()} />;
 							}
 						} else {
 							// data is property name
 							data = _this.getDisplayTextOfColumn(column, row);
 						}
-						return (<td style={style}>{data}</td>);
+						return (<td style={style} key={columnIndex}>{data}</td>);
 					} else {
 						columnIndex++;
 					}
@@ -997,7 +1006,7 @@
 		renderTableScrollY: function () {
 			var style = this.computeTableStyle();
 			var scrolledHeaderDivStyle = {
-				"overflow-y": "scroll"
+				overflowY: "scroll"
 			};
 			var scrolledBodyDivStyle = {
 				maxHeight: this.getComponentOption("scrollY"),
@@ -1188,8 +1197,8 @@
 		renderPagination: function () {
 			if (this.isPageable() && this.hasDataToDisplay()) {
 				// only show when pageable and has data to display
-				return (<NPagination className="n-table-pagination" pageCount={this.state.pageCount}
-				                     currentPageIndex={this.state.currentPageIndex} toPage={this.toPage.bind(this)}/>);
+				return (<$pt.Components.NPagination className="n-table-pagination" pageCount={this.state.pageCount}
+				                     currentPageIndex={this.state.currentPageIndex} toPage={this.toPage}/>);
 			} else {
 				return null;
 			}
@@ -1622,11 +1631,11 @@
 		onTitleClicked: function () {
 			this.state.expanded = !this.state.expanded;
 			if (this.state.expanded) {
-				$(React.findDOMNode(this.refs['table-panel-body'])).slideDown(300);
-				$(React.findDOMNode(this.refs['add-button'])).show();
+				$(ReactDOM.findDOMNode(this.refs['table-panel-body'])).slideDown(300);
+				$(ReactDOM.findDOMNode(this.refs['add-button'])).show();
 			} else {
-				$(React.findDOMNode(this.refs['table-panel-body'])).slideUp(300);
-				$(React.findDOMNode(this.refs['add-button'])).hide();
+				$(ReactDOM.findDOMNode(this.refs['table-panel-body'])).slideUp(300);
+				$(ReactDOM.findDOMNode(this.refs['add-button'])).hide();
 			}
 		},
 		/**
@@ -1649,7 +1658,7 @@
 							icon: NTable.EDIT_DIALOG_SAVE_BUTTON_ICON,
 							text: NTable.EDIT_DIALOG_SAVE_BUTTON_TEXT,
 							style: "primary",
-							click: this.onAddCompleted.bind(this)
+							click: this.onAddCompleted
 						}],
 						reset: this.getComponentOption('dialogResetVisible'),
 						validate: this.getComponentOption('dialogValidateVisible')
@@ -1693,7 +1702,7 @@
 							icon: NTable.EDIT_DIALOG_SAVE_BUTTON_ICON,
 							text: NTable.EDIT_DIALOG_SAVE_BUTTON_TEXT,
 							style: "primary",
-							click: this.onEditCompleted.bind(this),
+							click: this.onEditCompleted,
 							// show save when editing
 							view: 'edit'
 						}],
@@ -1735,9 +1744,9 @@
 				if (!canRemove || canRemove.call(this, this.getModel(), data)) {
 					this.getModel().remove(this.getDataId(), data);
 				}
-				NConfirm.getConfirmModal().hide();
+				$pt.Components.NConfirm.getConfirmModal().hide();
 			};
-			NConfirm.getConfirmModal().show(NTable.REMOVE_CONFIRM_TITLE,
+			$pt.Components.NConfirm.getConfirmModal().show(NTable.REMOVE_CONFIRM_TITLE,
 				NTable.REMOVE_CONFIRM_MESSAGE,
 				removeRow.bind(this, data));
 		},
@@ -1754,7 +1763,7 @@
 		 */
 		onSearchBoxChanged: function () {
 			var value = this.state.searchModel.get('text');
-			console.debug('Searching [text=' + value + '].');
+			// window.console.debug('Searching [text=' + value + '].');
 			if (value == null || value == "") {
 				this.setState({
 					searchText: null
@@ -1853,7 +1862,7 @@
 		 */
 		getEditDialog: function () {
 			if (this.state.editDialog === undefined || this.state.editDialog === null) {
-				this.state.editDialog = NModalForm.createFormModal(this.getLayout().getLabel());
+				this.state.editDialog = $pt.Components.NModalForm.createFormModal(this.getLayout().getLabel());
 			}
 			return this.state.editDialog;
 		},
@@ -1896,7 +1905,7 @@
 				// do nothing
 			} else if (evt.type == "change") {
 				// do nothing
-				console.log('Table[' + this.getDataId() + '] data changed.');
+				// window.console.log('Table[' + this.getDataId() + '] data changed.');
 			}
 
 			if (this.getModel().getValidator() != null) {
@@ -1940,22 +1949,34 @@
 				if (NTable.PAGE_JUMPING_PROXY) {
 					criteria = NTable.PAGE_JUMPING_PROXY.call(this, criteria);
 				}
-				$pt.doPost(url, criteria).done(function (data) {
-					if (typeof data === 'string') {
-						data = JSON.parse(data);
-					}
-					model.mergeCurrentModel(data);
-					// refresh
-					_this.forceUpdate();
-				});
+				var pageChangeListener = this.getEventMonitor('pageChange');
+				if (pageChangeListener) {
+					this.notifyEvent({
+						type: 'pageChange',
+						criteria: criteria,
+						target: this
+					});
+				} else {
+					$pt.doPost(url, criteria).done(function (data) {
+						if (typeof data === 'string') {
+							data = JSON.parse(data);
+						}
+						model.mergeCurrentModel(data);
+						// refresh
+						_this.forceUpdate();
+						// _this.setState({
+						// 	currentPageIndex: pageIndex
+						// });
+					});
+				}
 				// todo how to handle failure?
 			}
 		},
 		getDivComponent: function () {
-			return $(React.findDOMNode(this.refs.div));
+			return $(ReactDOM.findDOMNode(this.refs.div));
 		},
 		getComponent: function () {
-			return $(React.findDOMNode(this.refs.table));
+			return $(ReactDOM.findDOMNode(this.refs.table));
 		},
 		/**
 		 * get header label id
@@ -1966,7 +1987,7 @@
 		},
 		getScrollHeaderComponent: function () {
 			if (this.refs[this.getScrolledHeaderDivId()]) {
-				return $(React.findDOMNode(this.refs[this.getScrolledHeaderDivId()]));
+				return $(ReactDOM.findDOMNode(this.refs[this.getScrolledHeaderDivId()]));
 			} else {
 				return $("#___");
 			}
@@ -1980,7 +2001,7 @@
 		},
 		getScrollBodyComponent: function () {
 			if (this.refs[this.getScrolledBodyDivId()]) {
-				return $(React.findDOMNode(this.refs[this.getScrolledBodyDivId()]));
+				return $(ReactDOM.findDOMNode(this.refs[this.getScrolledBodyDivId()]));
 			} else {
 				return $("#___");
 			}
@@ -1994,7 +2015,7 @@
 		},
 		getFixedLeftBodyComponent: function () {
 			if (this.refs[this.getFixedLeftBodyDivId()]) {
-				return $(React.findDOMNode(this.refs[this.getFixedLeftBodyDivId()]));
+				return $(ReactDOM.findDOMNode(this.refs[this.getFixedLeftBodyDivId()]));
 			} else {
 				return $("#___");
 			}
@@ -2008,7 +2029,7 @@
 		},
 		getFixedRightBodyComponent: function () {
 			if (this.refs[this.getFixedRightBodyDivId()]) {
-				return $(React.findDOMNode(this.refs[this.getFixedRightBodyDivId()]));
+				return $(ReactDOM.findDOMNode(this.refs[this.getFixedRightBodyDivId()]));
 			} else {
 				return $("#___");
 			}
@@ -2028,8 +2049,8 @@
 			this.forceUpdate();
 		}
 	}));
-	context.NTable = NTable;
+	$pt.Components.NTable = NTable;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Table, function (model, layout, direction, viewMode) {
-		return <NTable {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NTable {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

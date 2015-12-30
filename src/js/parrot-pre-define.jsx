@@ -1,13 +1,8 @@
-/**
- * define parrot context $pt, and attach to global context.
- * can be referred directly if the global context is window
- */
-(function (context) {
-	// define parrot context
-	var $pt = context.$pt;
+(function (window) {
+	var $pt = window.$pt;
 	if ($pt == null) {
 		$pt = {};
-		context.$pt = $pt;
+		window.$pt = $pt;
 	}
 
 	// exceptions
@@ -24,7 +19,6 @@
 		};
 	};
 
-	// create component exception attach to parrot context
 	/**
 	 * create component exception
 	 * @param code {string} exception code
@@ -40,7 +34,7 @@
 	$pt.messages = messages;
 	$pt.defineMessage = function (key, message) {
 		if (messages[key] != null) {
-			console.log('Message[' + key + '=' + messages[key] + '] was replaced by [' + message + ']');
+			window.console.log('Message[' + key + '=' + messages[key] + '] was replaced by [' + message + ']');
 		}
 		messages[key] = message;
 		return $pt;
@@ -49,7 +43,13 @@
 		var message = messages[key];
 		return message == null ? null : message;
 	};
-
+	// components
+	$pt.Components = {};
+	$pt.exposeComponents = function(context) {
+		Object.keys($pt.Components).forEach(function(component) {
+			window[component] = $pt.Components[component];
+		});
+	};
 	// component constants
 	$pt.ComponentConstants = {
 		// component types
@@ -113,8 +113,48 @@
 			"506": "Application Exception"
 		}
 	};
+	$pt.parseJSON = function(object) {
+		if (object == null) {
+			return null;
+		}
+		if (typeof object === 'string') {
+			return JSON.parse(object);
+		} else {
+			return object;
+		}
+	};
 
-	var _context = context;
+	(function() {
+		var matched, userAgent = navigator.userAgent || "";
+
+		// merge jquery.browser here
+		var uaMatch = function( ua ) {
+			ua = ua.toLowerCase();
+
+			var match = /(chrome)[ \/]([\w.]+)/.exec( ua ) ||
+				/(webkit)[ \/]([\w.]+)/.exec( ua ) ||
+				/(opera)(?:.*version)?[ \/]([\w.]+)/.exec( ua ) ||
+				/(msie) ([\w.]+)/.exec( ua ) ||
+				ua.indexOf("compatible") < 0 && /(mozilla)(?:.*? rv:([\w.]+))?/.exec( ua ) ||
+				[];
+
+			return {
+				browser: match[ 1 ] || "",
+				version: match[ 2 ] || "0"
+			};
+		};
+		matched = uaMatch( userAgent );
+		$pt.browser = {};
+		if (matched.browser) {
+			$pt.browser[matched.browser] = true;
+			$pt.browser.version = matched.version;
+		}
+		if ($pt.browser.webkit) {
+			$pt.browser.safari = true;
+		}
+	}());
+
+	var _context = window;
 	$pt.getService = function (context, serviceName) {
 		var innerContext = context ? context : _context;
 		var innerServiceName = serviceName ? serviceName : '$service';
@@ -123,4 +163,4 @@
 		}
 		return innerContext[innerServiceName];
 	};
-})(this);
+})(window);

@@ -1,7 +1,7 @@
 /**
  * Page Header<br>
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NPageHeader = React.createClass({
 		displayName: 'NPageHeader',
 		statics: {
@@ -9,7 +9,7 @@
 		},
 		propTypes: {
 			// brand string
-			brand: React.PropTypes.string.isRequired,
+			brand: React.PropTypes.oneOfType([React.PropTypes.object, React.PropTypes.string]).isRequired,
 			brandUrl: React.PropTypes.string,
 			brandFunc: React.PropTypes.func,
 			// menu object
@@ -50,7 +50,7 @@
 			});
 
 			return (<div className="navbar-form navbar-right" role="search">
-				<NText model={this.state.model} layout={layout}/>
+				<$pt.Components.NText model={this.state.model} layout={layout}/>
 			</div>);
 		},
 		renderMenuItem: function (item, index, menus, onTopLevel) {
@@ -58,7 +58,7 @@
 				// render dropdown menu
 				var _this = this;
 				return (
-					<li className={onTopLevel ? "dropdown" : "dropdown-submenu"}>
+					<li className={onTopLevel ? "dropdown" : "dropdown-submenu"} key={index}>
 						<a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button"
 						   aria-expanded="false">
 							{item.text} {onTopLevel ? <span className="caret"></span> : null}
@@ -72,15 +72,15 @@
 				);
 			} else if (item.divider === true) {
 				// render divider
-				return (<li className="divider"></li>);
+				return (<li className="divider" key={index}></li>);
 			} else if (item.func !== undefined) {
 				// call javascript function
 				return (<li>
-					<a href="javascript:void(0);" onClick={this.onMenuClicked.bind(this, item.func)}>{item.text}</a>
+					<a href="javascript:void(0);" onClick={this.onMenuClicked.bind(this, item.func)} key={index}>{item.text}</a>
 				</li>);
 			} else {
 				// jump to url
-				return (<li><a href={item.url}>{item.text}</a></li>);
+				return (<li key={index}><a href={item.url}>{item.text}</a></li>);
 			}
 		},
 		/**
@@ -176,11 +176,12 @@
 						<div className="collapse navbar-collapse" id="navbar-1">
 							{this.props.menus ? this.renderMenus() : null}
 							{this.props.search ? this.renderSearchBox() : null}
+							{this.props.custom ? this.props.custom.call(this) : null}
 						</div>
 					</div>
 				</nav>
 			);
 		}
 	});
-	context.NPageHeader = NPageHeader;
-}(this, jQuery, $pt));
+	$pt.Components.NPageHeader = NPageHeader;
+}(window, jQuery, React, ReactDOM, $pt));

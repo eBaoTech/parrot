@@ -29,7 +29,7 @@
  *      }
  * }
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NCheck = React.createClass($pt.defineCellComponent({
 		displayName: 'NCheck',
 		propTypes: {
@@ -55,7 +55,7 @@
 		 */
 		componentDidUpdate: function (prevProps, prevState) {
 			// set model value to component
-			this.getComponent().prop("checked", this.getValueFromModel());
+			// this.getComponent().prop("checked", this.getValueFromModel());
 			// add post change listener to handle model change
 			this.addPostChangeListener(this.onModelChanged);
 			this.addEnableDependencyMonitor();
@@ -66,7 +66,7 @@
 		 */
 		componentDidMount: function () {
 			// set model value to component
-			this.getComponent().prop("checked", this.getValueFromModel());
+			// this.getComponent().prop("checked", this.getValueFromModel());
 			// add post change listener to handle model change
 			this.addPostChangeListener(this.onModelChanged);
 			this.addEnableDependencyMonitor();
@@ -138,9 +138,9 @@
 			};
 			css[this.getComponentCSS('n-checkbox')] = true;
 			var isLabelAtLeft = this.isLabelAtLeft();
+			// <input type="checkbox" style={{display: "none"}}
+			// 	   onChange={this.onComponentChanged} ref='txt'/>
 			return (<div className={$pt.LayoutHelper.classSet(css)}>
-				<input type="checkbox" style={{display: "none"}}
-				       onChange={this.onComponentChanged} ref='txt'/>
 				{isLabelAtLeft ? this.renderLabel(true) : null}
 				{this.renderCheckbox()}
 				{!isLabelAtLeft ? this.renderLabel(false) : null}
@@ -151,7 +151,7 @@
 		 * for fix the outer span cannot gain focus in IE11
 		 */
 		onInnerClicked: function () {
-			$(React.findDOMNode(this.refs.out)).focus();
+			$(ReactDOM.findDOMNode(this.refs.out)).focus();
 		},
 		/**
 		 * handle button clicked event
@@ -168,16 +168,16 @@
 		 * on component change
 		 * @param evt
 		 */
-		onComponentChanged: function (evt) {
-			// synchronize value to model
-			this.setValueToModel(evt.target.checked);
-		},
+		// onComponentChanged: function (evt) {
+		// 	// synchronize value to model
+		// 	this.setValueToModel(evt.target.checked);
+		// },
 		/**
 		 * on model change
 		 * @param evt
 		 */
 		onModelChanged: function (evt) {
-			this.getComponent().prop("checked", evt.new === true);
+			// this.getComponent().prop("checked", evt.new === true);
 			this.forceUpdate();
 		},
 		/**
@@ -194,19 +194,19 @@
 		isLabelAttached: function () {
 			return this.getComponentOption('labelAttached') !== null;
 		},
-		isLabelAtLeft: function () {
-			return this.getComponentOption('labelAttached') === 'left';
-		},
 		/**
 		 * get component
 		 * @returns {jQuery}
 		 */
-		getComponent: function () {
-			return $(React.findDOMNode(this.refs.txt));
+		// getComponent: function () {
+		// 	return $(ReactDOM.findDOMNode(this.refs.txt));
+		// },
+		isLabelAtLeft: function () {
+			return this.getComponentOption('labelAttached') === 'left';
 		}
 	}));
-	context.NCheck = NCheck;
+	$pt.Components.NCheck = NCheck;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Check, function (model, layout, direction, viewMode) {
-		return <NCheck {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NCheck {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

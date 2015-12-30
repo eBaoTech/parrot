@@ -1,7 +1,7 @@
 /**
  * Created by brad.wu on 9/2/2015.
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NNormalLabel = React.createClass({
 		displayName: 'NNormalLabel',
 		propTypes: {
@@ -30,8 +30,8 @@
 				css['n-label-' + this.props.size] = true;
 			}
 			return (<span className={$pt.LayoutHelper.classSet(css)}>
-            {texts.map(function (text) {
-	            return <span>{text}</span>;
+            {texts.map(function (text, textIndex) {
+	            return <span key={textIndex}>{text}</span>;
             })}
         </span>);
 		},
@@ -39,5 +39,5 @@
 			return this.props.text;
 		}
 	});
-	context.NNormalLabel = NNormalLabel;
-}(this, jQuery, $pt));
+	$pt.Components.NNormalLabel = NNormalLabel;
+}(window, jQuery, React, ReactDOM, $pt));

@@ -38,7 +38,7 @@
  *      }
  * }
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NArrayTab = React.createClass($pt.defineCellComponent({
 		displayName: 'NArrayTab',
 		statics: {
@@ -151,11 +151,12 @@
 					});
 				}
 			}
-			return (<NForm model={tab.data}
+			return (<$pt.Components.NForm model={tab.data}
 			               layout={$pt.createFormLayout(tab.layout)}
 			               direction={this.props.direction}
 						   view={this.isViewMode()}
-			               className={$pt.LayoutHelper.classSet(css)}/>
+			               className={$pt.LayoutHelper.classSet(css)}
+						   key={tabIndex}/>
 			);
 		},
 		/**
@@ -177,7 +178,7 @@
 				}
 			}.bind(this);
 			return (<div className={this.getComponentCSS('n-array-tab')}>
-				<NTab type={this.getComponentOption('tabType')}
+				<$pt.Components.NTab type={this.getComponentOption('tabType')}
 				      justified={this.getComponentOption('justified')}
 				      direction={this.getComponentOption('titleDirection')}
 				      size={this.getComponentOption('titleIconSize')}
@@ -186,7 +187,7 @@
 				      canActive={canActiveProxy}
 				      onActive={this.onTabClicked}
 				      ref='tabs'>
-				</NTab>
+				</$pt.Components.NTab>
 
 				<div className='n-array-tab-content' ref='content'>
 					{tabs.map(this.renderTabContent)}
@@ -228,7 +229,7 @@
 			var _this = this;
 			if (this.state.tabs) {
 				this.state.tabs.forEach(function(tab, tabIndex) {
-					if (_this.isAddable() && (tabIndex != _this.state.tabs.length - 1)) {
+					if ((_this.isAddable() && (tabIndex != _this.state.tabs.length - 1)) || !_this.isAddable()) {
 						var model = tab.data;
 						tab.label = _this.getTabTitle(model);
 						tab.icon = _this.getTabIcon(model);
@@ -407,8 +408,8 @@
 			this.forceUpdate();
 		}
 	}));
-	context.NArrayTab = NArrayTab;
+	$pt.Components.NArrayTab = NArrayTab;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.ArrayTab, function (model, layout, direction, viewMode) {
-		return <NArrayTab {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NArrayTab {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

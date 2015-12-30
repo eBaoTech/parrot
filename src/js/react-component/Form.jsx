@@ -34,7 +34,7 @@
  *      }
  * }
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NForm = React.createClass({
 		displayName: 'NForm',
 		statics: {
@@ -172,7 +172,7 @@
 					width: 12
 				}
 			};
-			return <NPanel model={this.getModel()}
+			return <$pt.Components.NPanel model={this.getModel()}
 			               layout={$pt.createCellLayout(sections[0].getParentCard().getId() + '-body', sectionLayout)}
 			               direction={this.getLabelDirection()}
 						   view={this.isViewMode()}/>;
@@ -289,9 +289,9 @@
 			}
 			if (right.length != 0 || left.length != 0) {
 				right = right.reverse();
-				footer = (<NPanelFooter right={right} left={left} model={this.getModel()} view={this.isViewMode()}/>);
+				footer = (<$pt.Components.NPanelFooter right={right} left={left} model={this.getModel()} view={this.isViewMode()}/>);
 			}
-			return (<div className={$pt.LayoutHelper.classSet(css)}>
+			return (<div className={$pt.LayoutHelper.classSet(css)} key={index}>
 				{this.renderSections(card.getSections())}
 				{footer}
 			</div>);
@@ -324,8 +324,8 @@
 				'n-cards-free': this.isFreeCard()
 			});
 			var _this = this;
-			return (<ul className={css}>
-				{this.getLayout().getCards().map(function (card) {
+			return (<ul className={css} key='wizards'>
+				{this.getLayout().getCards().map(function (card, cardIndex) {
 					var css = {
 						active: card.getId() == _this.state.activeCard,
 						before: _this.isBeforeActiveCard(card.getId()),
@@ -346,7 +346,7 @@
 						iconCSS['fa-' + card.getIcon()] = true;
 						icon = <span className={$pt.LayoutHelper.classSet(iconCSS)}/>;
 					}
-					return (<li className={$pt.LayoutHelper.classSet(css)}>
+					return (<li className={$pt.LayoutHelper.classSet(css)} key={cardIndex}>
 						<a href='javascript:void(0);' onClick={click}>
 							{icon} {card.getLabel()}
 							{_this.renderBadge(card)}
@@ -539,9 +539,9 @@
 			return null;
 		}
 	});
-	context.NForm = NForm;
+	$pt.Components.NForm = NForm;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Form, function (model, layout, direction, viewMode) {
 		var formLayout = $pt.createFormLayout(layout.getComponentOption('editLayout'));
-		return <NForm {...$pt.LayoutHelper.transformParameters(model, formLayout, direction, viewMode)}/>;
+		return <$pt.Components.NForm {...$pt.LayoutHelper.transformParameters(model, formLayout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

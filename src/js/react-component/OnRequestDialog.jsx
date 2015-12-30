@@ -2,7 +2,7 @@
  * on request modal dialog.
  * z-index is 9899 and 9898, less than exception dialog, more than any other.
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NOnRequestModal = React.createClass({
 		displayName: 'NOnRequestModal',
 		statics: {
@@ -12,12 +12,13 @@
 					if (onRequestContainer.length == 0) {
 						$("<div id='onrequest_modal_container' />").appendTo($(document.body));
 					}
-					$pt.onRequestDialog = React.render(
-						<NOnRequestModal className={className}/>, document.getElementById("onrequest_modal_container"));
+					$pt.onRequestDialog = ReactDOM.render(
+						<$pt.Components.NOnRequestModal className={className}/>, document.getElementById("onrequest_modal_container"));
 				}
 				return $pt.onRequestDialog;
 			},
-			WAITING_MESSAGE: 'Send request to server and waiting for response...'
+			WAITING_MESSAGE: 'Send request to server and waiting for response...',
+			Z_INDEX: 9898
 		},
 		propTypes: {
 			className: React.PropTypes.string
@@ -30,12 +31,7 @@
 		/**
 		 * set z-index
 		 */
-		setZIndex: function () {
-			var div = $(React.findDOMNode(this.refs.body)).closest(".modal");
-			if (div.length > 0) {
-				div.css({"z-index": 9899});
-				div.prev().css({"z-index": 9898});
-			}
+		fixDocumentPadding: function () {
 			document.body.style.paddingRight = 0;
 		},
 		/**
@@ -44,29 +40,42 @@
 		 * @param prevState
 		 */
 		componentDidUpdate: function (prevProps, prevState) {
-			this.setZIndex();
+			this.fixDocumentPadding();
 		},
 		/**
 		 * did mount
 		 */
 		componentDidMount: function () {
-			this.setZIndex();
+			this.fixDocumentPadding();
 		},
 		render: function () {
 			if (!this.state.visible) {
 				return null;
 			}
 			var css = {
-				'n-on-request': true
+				'n-on-request': true,
+				modal: true,
+				fade: true,
+				in: true
 			};
 			if (this.props.className) {
 				css[this.props.className] = true;
 			}
-			return (<Modal className={$pt.LayoutHelper.classSet(css)}>
-				<Modal.Body ref="body">
-					<span className='fa fa-fw fa-lg fa-spin fa-spinner'/> {NOnRequestModal.WAITING_MESSAGE}
-				</Modal.Body>
-			</Modal>);
+			return (<div>
+				<div className="modal-backdrop fade in" style={{zIndex: NOnRequestModal.Z_INDEX}}></div>
+				<div className={$pt.LayoutHelper.classSet(css)}
+					 tabIndex="-1"
+					 role="dialog"
+					 style={{display: 'block', zIndex: NOnRequestModal.Z_INDEX + 1}}>
+					<div className="modal-danger modal-dialog">
+						<div className="modal-content" role="document">
+							<div className="modal-body" ref='body'>
+								<span className='fa fa-fw fa-lg fa-spin fa-spinner'/> {NOnRequestModal.WAITING_MESSAGE}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>);
 		},
 		/**
 		 * hide dialog
@@ -81,5 +90,5 @@
 			this.setState({visible: true});
 		}
 	});
-	context.NOnRequestModal = NOnRequestModal;
-}(this, jQuery, $pt));
+	$pt.Components.NOnRequestModal = NOnRequestModal;
+}(window, jQuery, React, ReactDOM, $pt));

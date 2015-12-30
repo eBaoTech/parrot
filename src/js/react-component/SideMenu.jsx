@@ -1,4 +1,4 @@
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NSideMenu = React.createClass({
 		displayName: 'NSideMenu',
 		statics: {
@@ -24,8 +24,8 @@
 					if (sideMenuContainer.length == 0) {
 						$("<div id='" + containerId + "' />").appendTo($(document.body));
 					}
-					$pt.sideMenu[containerId] = React.render(
-						<NSideMenu menus={menus}
+					$pt.sideMenu[containerId] = ReactDOM.render(
+						<$pt.Components.NSideMenu menus={menus}
 						           className={className}
 						           hover={hover ? true : false}/>,
 						document.getElementById(containerId));
@@ -49,32 +49,28 @@
 			return {};
 		},
 		componentDidMount: function () {
-			$(React.findDOMNode(this.refs.menus)).hide();
+			$(ReactDOM.findDOMNode(this.refs.menus)).hide();
 		},
 		renderMenuItem: function (item, index, menus, onTopLevel) {
 			if (item.children !== undefined) {
 				// render dropdown menu
 				var _this = this;
 				var id = 'item_' + index;
-				return (
-					<li ref={id}>
-						<a href="javascript:void(0);"
-						   onClick={this.onParentMenuClicked.bind(this, id)} ref={id + '_link'}>
-							{item.text}
-							<span className='fa fa-fw fa-angle-double-down n-side-menu-ul' ref={id + '_icon'}/>
-						</a>
-						<ul ref={id + '_child'} style={{
-                    display: 'none'
-                }}>
-							{item.children.map(function (childItem, childIndex, dropdownItems) {
-								return _this.renderMenuItem(childItem, index + '_' + childIndex, dropdownItems, false);
-							})}
-						</ul>
-					</li>
-				);
+				return (<li ref={id} key={index}>
+					<a href="javascript:void(0);"
+					   onClick={this.onParentMenuClicked.bind(this, id)} ref={id + '_link'}>
+						{item.text}
+						<span className='fa fa-fw fa-angle-double-down n-side-menu-ul' ref={id + '_icon'}/>
+					</a>
+					<ul ref={id + '_child'} style={{display: 'none'}}>
+						{item.children.map(function (childItem, childIndex, dropdownItems) {
+							return _this.renderMenuItem(childItem, index + '_' + childIndex, dropdownItems, false);
+						})}
+					</ul>
+				</li>);
 			} else if (item.func !== undefined) {
 				// call javascript function
-				return (<li>
+				return (<li key={index}>
 					<a href="javascript:void(0);"
 					   onClick={this.onMenuClicked.bind(this, item.func, item.value)}>{item.text}</a>
 				</li>);
@@ -82,7 +78,7 @@
 				return null;
 			} else {
 				// jump to url
-				return (<li><a href={item.url}>{item.text}</a></li>);
+				return (<li key={index}><a href={item.url}>{item.text}</a></li>);
 			}
 		},
 		render: function () {
@@ -120,15 +116,15 @@
 			func.call(this, value);
 		},
 		onParentMenuClicked: function (id) {
-			$(React.findDOMNode(this.refs[id + '_link'])).blur();
-			var ul = $(React.findDOMNode(this.refs[id + '_child']));
+			$(ReactDOM.findDOMNode(this.refs[id + '_link'])).blur();
+			var ul = $(ReactDOM.findDOMNode(this.refs[id + '_child']));
 			ul.toggle('fade', function () {
 				// if close, then close all sub menus
 				if (ul.not(':visible')) {
 					ul.find('ul').hide();
 				}
 			});
-			$(React.findDOMNode(this.refs[id + '_icon'])).toggleClass('fa-angle-double-down fa-angle-double-up');
+			$(ReactDOM.findDOMNode(this.refs[id + '_icon'])).toggleClass('fa-angle-double-down fa-angle-double-up');
 
 			this.collapseMenus(id);
 		},
@@ -141,15 +137,15 @@
 			Object.keys(this.refs).forEach(function (key) {
 				if (key.endsWith('_link')) {
 					var linkId = key.substr(0, key.length - 5);
-					if (linkId != id) {
-						var ul = $(React.findDOMNode(_this.refs[linkId + '_child']));
+					if (!id || !id.startsWith(linkId)) {
+						var ul = $(ReactDOM.findDOMNode(_this.refs[linkId + '_child']));
 						ul.hide('fade', function () {
 							ul.find('ul').hide();
 						});
 					}
 				}
 			});
-			$(React.findDOMNode(this.refs[id + '_icon'])).toggleClass('fa-angle-double-down fa-angle-double-up');
+			$(ReactDOM.findDOMNode(this.refs[id + '_icon'])).toggleClass('fa-angle-double-down fa-angle-double-up');
 		},
 		/**
 		 * on close button clicked
@@ -165,14 +161,14 @@
 				clearTimeout(this.state.willHide);
 				this.state.willHide = null;
 			}
-			$(React.findDOMNode(this.refs.menus)).show('fade');
+			$(ReactDOM.findDOMNode(this.refs.menus)).show('fade');
 		},
 		/**
 		 * hide side menu
 		 */
 		hide: function () {
 			var _this = this;
-			$(React.findDOMNode(this.refs.menus)).hide('fade', function () {
+			$(ReactDOM.findDOMNode(this.refs.menus)).hide('fade', function () {
 				_this.collapseMenus();
 			});
 		},
@@ -183,5 +179,5 @@
 			}, 300);
 		}
 	});
-	context.NSideMenu = NSideMenu;
-}(this, jQuery, $pt));
+	$pt.Components.NSideMenu = NSideMenu;
+}(window, jQuery, React, ReactDOM, $pt));

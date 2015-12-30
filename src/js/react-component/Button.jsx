@@ -32,7 +32,7 @@
  *      }
  * }
  */
-(function (context, $, $pt) {
+(function (window, $, React, ReactDOM, $pt) {
 	var NFormButton = React.createClass($pt.defineCellComponent({
 		displayName: 'NFormButton',
 		propTypes: {
@@ -109,15 +109,16 @@
 					disabled={!this.isEnabled()}
 					data-toggle="dropdown"
 					aria-haspopup="true"
-					aria-expanded="false">
+					aria-expanded="false"
+					key='a'>
 				   	<span className="caret"></span>
 				</a>);
 				var emptyFunction = function(){};
 				var _this = this;
-				var menus = (<ul className="dropdown-menu">
-					{more.map(function(menu) {
+				var menus = (<ul className="dropdown-menu" key='ul'>
+					{more.map(function(menu, menuIndex) {
 						if (menu.divider) {
-							return (<li role='separator' className='divider'></li>);
+							return (<li role='separator' className='divider' key={menuIndex}></li>);
 						} else {
 							var click = menu.click ? menu.click : emptyFunction;
 							var label = menu.text;
@@ -125,7 +126,7 @@
 							if (label && icon) {
 								label = ' ' + label;
 							}
-							return (<li>
+							return (<li key={menuIndex}>
 								<a href='javascript:void(0);' onClick={click.bind(_this, _this.getModel())}>
 									{icon}{label}
 								</a>
@@ -192,7 +193,7 @@
 		},
 		onClicked: function (evt) {
 			if (this.isEnabled()) {
-				$(React.findDOMNode(this.refs.a)).toggleClass('effect');
+				$(ReactDOM.findDOMNode(this.refs.a)).toggleClass('effect');
 				var onclick = this.getComponentOption("click");
 				if (onclick) {
 					onclick.call(this, this.getModel(), evt.target);
@@ -236,8 +237,8 @@
 			// nothing
 		}
 	}));
-	context.NFormButton = NFormButton;
+	$pt.Components.NFormButton = NFormButton;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.Button, function (model, layout, direction, viewMode) {
-		return <NFormButton {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NFormButton {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

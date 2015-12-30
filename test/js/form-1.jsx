@@ -19,6 +19,14 @@
                                 label: 'XYZ'
                             }
                         }
+                    },
+                    b: {
+                        label: 'Section B in Card A',
+                        layout: {
+                            xyz: {
+                                label: 'XYZ'
+                            }
+                        }
                     }
                 }
             },
@@ -68,5 +76,5 @@
         </div>
     </div>
     );
-    React.render(panel, document.getElementById('main'));
+    ReactDOM.render(panel, document.getElementById('main'));
 })();

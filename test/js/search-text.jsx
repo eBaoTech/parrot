@@ -50,13 +50,13 @@
             <NSearchText model={model} layout={plainText} view={true}/>
         </div>
     </div>);
-    React.render(panel, document.getElementById('main'));
+    ReactDOM.render(panel, document.getElementById('main'));
 
 
     $.mockjax({
         url: "/test",
         response: function (settings) {
-            var request = JSON.parse(settings.data);
+            var request = settings.data;
             var code = request.code;
             this.responseText = {
                 code: code,
@@ -68,7 +68,7 @@
         url: "/test/query",
         response: function (settings) {
             var items = [];
-            var request = JSON.parse(settings.data);
+            var request = settings.data;
             if (request.pageIndex) {
                 for (var index = 0; index < 10; index++) {
                     var suffix = (request.countPerPage * (request.pageIndex - 1) + index + 1);

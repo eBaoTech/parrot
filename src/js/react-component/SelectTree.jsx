@@ -1,4 +1,11 @@
-(function(context, $, $pt) {
+/**
+ * popover will be closed on
+ * 		2.1 mouse down on others in document
+ * 		2.2 press escape or tab
+ * 		2.3 mouse wheel
+ *		2.4 window resize
+ */
+(function(window, $, React, ReactDOM, $pt) {
 	var NSelectTree = React.createClass($pt.defineCellComponent({
 		displayName: 'NSelectTree',
 		statics: {
@@ -91,7 +98,7 @@
 			var layout = $pt.createCellLayout('values', this.getTreeLayout());
 			var model = $pt.createModel({values: this.getValueFromModel()});
 			model.addPostChangeListener('values', this.onTreeValueChanged);
-			return <NTree model={model} layout={layout}/>;
+			return <$pt.Components.NTree model={model} layout={layout}/>;
 		},
 		renderSelectionItem: function(codeItem, nodeId) {
 			return (<li>
@@ -212,7 +219,10 @@
 			if (this.state.popoverDiv == null) {
 				this.state.popoverDiv = $('<div>');
 				this.state.popoverDiv.appendTo($('body'));
-				$(document).on('click', this.onDocumentClicked).on('keyup', this.onDocumentKeyUp);
+				$(document).on('mousedown', this.onDocumentMouseDown)
+					.on('keyup', this.onDocumentKeyUp)
+					.on('mousewheel', this.onDocumentMouseWheel);
+				$(window).on('resize', this.onWindowResize);
 			}
 			this.state.popoverDiv.hide();
 		},
@@ -221,30 +231,99 @@
 			var component = this.getComponent();
 			styles.width = component.outerWidth();
 			var offset = component.offset();
-			styles.top = offset.top + component.outerHeight();
-			styles.left = offset.left;
+			styles.top = -10000; // let it out of screen
+			styles.left = 0;
 			var popover = (<div role="tooltip" className="n-select-tree-popover popover bottom in" style={styles}>
 				<div className="arrow"></div>
 				<div className="popover-content">
 					{this.renderTree()}
 				</div>
 			</div>);
-			React.render(popover, this.state.popoverDiv.get(0));
+			ReactDOM.render(popover, this.state.popoverDiv.get(0), this.onPopoverRenderComplete);
 		},
 		showPopover: function() {
 			this.renderPopoverContainer();
 			this.renderPopover();
+		},
+		onPopoverRenderComplete: function() {
 			this.state.popoverDiv.show();
+
+			var popover = this.state.popoverDiv.children('.popover');
+			var styles = {};
+			var component = this.getComponent();
+			styles.width = component.outerWidth();
+			var offset = component.offset();
+			styles.top = offset.top + component.outerHeight(); // let it out of screen
+			styles.left = offset.left;
+
+			var onTop = false;
+			var rightToLeft = false;
+			var realHeight = popover.outerHeight();
+			var realWidth = popover.outerWidth();
+			// set the real top, assumpt it is on bottom
+			styles.top = offset.top + component.outerHeight();
+			// check popover in top or bottom
+			if ((styles.top + realHeight) > ($(window).height() + $(window).scrollTop())) {
+				// cannot show in bottom and in current viewport
+				// check it is enough top or not
+				if ((offset.top - $(window).scrollTop()) >= realHeight) {
+					// enough
+					styles.top = offset.top - realHeight;
+					onTop = true;
+				} else if ((styles.top + realHeight) <= $(document).height()) {
+					// cannot show in bottom and in current document
+					onTop = false;
+				} else if (offset.top < realHeight) {
+					// cannot show in top and in current document
+					onTop = false;
+				} else {
+					styles.top = offset.top - realHeight;
+					onTop = true;
+				}
+			} else {
+				// can show in bottom and in current viewport
+				onTop = false;
+			}
+
+			// check popover to left or right
+			if (realWidth > styles.width) {
+				width = $(document).width();
+				if ((styles.left + realWidth) <= width) {
+					// normal from left to right, do nothing
+				} else if ((styles.left + styles.width) >= realWidth) {
+					// from right to left
+					styles.left = styles.left + styles.width - realWidth;
+					rightToLeft = true;
+				} else {
+					// still left to right, do nothing
+				}
+			}
+
+			if (onTop) {
+				popover.addClass('top');
+				popover.removeClass('bottom');
+			} else {
+				popover.removeClass('top');
+				popover.addClass('bottom');
+			}
+			if (rightToLeft) {
+				popover.addClass('right-to-left');
+			}
+			popover.css({top: styles.top, left: styles.left});
 		},
 		hidePopover: function() {
-			if (this.state.popoverDiv && this.state.popoverDiv.is(':visible')) {
-				this.state.popoverDiv.hide();
-				React.render(<noscript/>, this.state.popoverDiv.get(0));
-			}
+			// if (this.state.popoverDiv && this.state.popoverDiv.is(':visible')) {
+			// 	this.state.popoverDiv.hide();
+			// 	ReactDOM.render(<noscript/>, this.state.popoverDiv.get(0));
+			// }
+			this.destroyPopover();
 		},
 		destroyPopover: function() {
 			if (this.state.popoverDiv) {
-				$(document).off('click', this.onDocumentClicked).off('keyup', this.onDocumentKeyUp);
+				$(document).off('mousedown', this.onDocumentMouseDown)
+					.off('keyup', this.onDocumentKeyUp)
+					.off('mousewheel', this.onDocumentMouseWheel);
+				$(window).off('resize', this.onWindowResize);
 				this.state.popoverDiv.remove();
 				delete this.state.popoverDiv;
 			}
@@ -256,16 +335,25 @@
 			}
 			this.showPopover();
 		},
-		onDocumentClicked: function(evt) {
+		onDocumentMouseDown: function(evt) {
 			var target = $(evt.target);
 			if (target.closest(this.getComponent()).length == 0 && target.closest(this.state.popoverDiv).length == 0) {
 				this.hidePopover();
 			}
 		},
-		onDocumentKeyUp: function(evt) {
-			if (evt.keyCode === 27) {
+		onDocumentMouseWheel: function(evt) {
+			var target = $(evt.target);
+			if (target.closest(this.state.popoverDiv).length == 0) {
 				this.hidePopover();
 			}
+		},
+		onDocumentKeyUp: function(evt) {
+			if (evt.keyCode === 27 || evt.keyCode === 9) { // escape and tab
+				this.hidePopover();
+			}
+		},
+		onWindowResize: function() {
+			this.hidePopover();
 		},
 		/**
 		 * on parent model changed
@@ -356,7 +444,7 @@
 			}
 		},
 		getComponent: function() {
-			return $(React.findDOMNode(this.refs.comp));
+			return $(ReactDOM.findDOMNode(this.refs.comp));
 		},
 		/**
 		 * get tree model
@@ -387,6 +475,15 @@
 			}
 			treeLayout.comp.data = this.getAvailableTreeModel();
 			treeLayout.comp.valueAsArray = treeLayout.comp.valueAsArray ? treeLayout.comp.valueAsArray : false;
+			treeLayout.evt = treeLayout.evt ? treeLayout.evt : {};
+			treeLayout.evt.expand = treeLayout.evt.expand ? function(evt) {
+				treeLayout.evt.expand.call(this, evt);
+				this.onPopoverRenderComplete.call(this);
+			} : this.onPopoverRenderComplete;
+			treeLayout.evt.collapse = treeLayout.evt.collapse ? function(evt) {
+				treeLayout.evt.collapse.call(this, evt);
+				this.onPopoverRenderComplete.call(this);
+			} : this.onPopoverRenderComplete;
 			return treeLayout;
 		},
 		isHideChildWhenParentChecked: function() {
@@ -427,8 +524,8 @@
 			return this.getParentModel().get(this.getParentPropertyId());
 		}
 	}));
-	context.NSelectTree = NSelectTree;
+	$pt.Components.NSelectTree = NSelectTree;
 	$pt.LayoutHelper.registerComponentRenderer($pt.ComponentConstants.SelectTree, function (model, layout, direction, viewMode) {
-		return <NSelectTree {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
+		return <$pt.Components.NSelectTree {...$pt.LayoutHelper.transformParameters(model, layout, direction, viewMode)}/>;
 	});
-}(this, jQuery, $pt));
+}(window, jQuery, React, ReactDOM, $pt));

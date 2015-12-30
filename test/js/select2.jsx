@@ -3,7 +3,7 @@
  */
 (function () {
     var model = $pt.createModel({
-        name: null
+        name: '7'
     });
     var data = $pt.createCodeTable([
         {id: '1', text: 'Option A'},
@@ -77,5 +77,5 @@
             <NSelect model={model} layout={normal} view={true}/>
         </div>
     </div>);
-    React.render(panel, document.getElementById('main'));
+    ReactDOM.render(panel, document.getElementById('main'));
 })();
